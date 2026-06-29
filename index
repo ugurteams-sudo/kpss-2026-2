@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KPSS 2026 ORTAÖĞRETİM KOMUTA & ANALİZ MERKEZİ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        :root {
+            --bg-base: #09090b; --bg-panel: #121214; --bg-surface: #1c1c21; 
+            --bg-surface-grad: linear-gradient(145deg, #222228 0%, #18181c 100%);
+            --border: #2f2f36; --border-light: #44444d; --text-main: #f4f4f5;
+            --text-muted: #a1a1aa; --accent: #FF6B00; --accent-hover: #e66000;
+            --accent-glow: rgba(255, 107, 0, 0.25); --success: #10B981;
+            --danger: #EF4444; --warning: #F59E0B; --info: #3B82F6;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-base); color: var(--text-main);
+            font-family: 'Roboto', system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+            height: 100vh; display: flex; justify-content: center; align-items: center;
+            padding: 2vh 2vw; overflow: hidden;
+        }
+
+        button, .btn, .tab-btn, .status-btn, .modal-close {
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent; outline: none;
+        }
+
+        h1, h2, h3, h4, h5, h6, .tab-btn, .btn, th, .kronos-title { font-family: 'Poppins', sans-serif; }
+
+        .container {
+            width: 96vw; height: 96vh; max-width: 1920px; background: var(--bg-panel);
+            border: 1px solid var(--border); border-radius: 16px; display: flex;
+            flex-direction: column; padding: 1.5rem 2.5rem;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05);
+            position: relative;
+        }
+
+        .header-title { text-align: left; font-size: 1.5rem; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 1.25rem; flex-shrink: 0; display: flex; align-items: center; gap: 12px; text-shadow: 0 0 20px rgba(255,255,255,0.1); }
+        .header-title span { color: var(--accent); font-weight: 400; }
+        .tabs { display: flex; gap: 2rem; border-bottom: 2px solid var(--border); margin-bottom: 1.5rem; flex-shrink: 0; position: relative; z-index: 10; overflow-x: auto;}
+        .tab-btn { padding: 0.75rem 0; cursor: pointer; border: none; background: transparent; font-size: 0.95rem; font-weight: 500; color: var(--text-muted); transition: all 0.2s ease; position: relative; white-space: nowrap; }
+        .tab-btn:hover { color: var(--text-main); }
+        .tab-btn.active { color: var(--text-main); font-weight: 600; }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 3px; background-color: var(--accent); border-radius: 3px 3px 0 0; box-shadow: 0 -2px 10px var(--accent-glow); }
+        .tab-content { display: none; height: 100%; flex-direction: column; overflow: hidden; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: flex; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .motivation-overlay, .modal-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 9999; backdrop-filter: blur(15px); 
+            display: flex; justify-content: center; align-items: center; text-align: center; padding: 1.5rem; 
+            opacity: 0; visibility: hidden; pointer-events: none; transition: all 0.3s ease; 
+        }
+        .motivation-overlay.active, .modal-overlay.active { 
+            opacity: 1; visibility: visible; pointer-events: auto; animation: zoomIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+        .motivation-box { background: var(--bg-surface-grad); border: 1px solid var(--border); border-radius: 20px; padding: 4rem; max-width: 900px; width: 100%; box-shadow: 0 30px 80px rgba(255,107,0,0.15), inset 0 1px 0 rgba(255,255,255,0.05); }
+        .motivation-text { font-size: 1.8rem; font-weight: 500; color: var(--text-main); margin-bottom: 3rem; line-height: 1.6; font-family: 'Poppins', sans-serif; font-style: italic; }
+        @keyframes zoomIn { from { transform: scale(0.9); } to { transform: scale(1); } }
+
+        .modal-content { background: var(--bg-surface-grad); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; padding: 2rem; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.8); text-align: left; }
+        .modal-close { position: absolute; top: 1rem; right: 1rem; font-size: 2rem; color: var(--text-muted); cursor: pointer; background: none; border: none; transition: color 0.2s; line-height: 1; z-index: 50; }
+        .modal-close:hover { color: var(--text-main); }
+        .kronos-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px dashed var(--border); flex-wrap: wrap; }
+        .kronos-title { color: var(--text-main); font-size: 1.4rem; font-weight: 600; }
+        .kronos-report-item { background: rgba(0,0,0,0.2); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 1rem; }
+        .kronos-report-item h4 { font-size: 0.95rem; color: var(--text-main); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+
+        .top-row { display: flex; gap: 1.5rem; margin-bottom: 1.5rem; flex-shrink: 0; }
+        .ai-assistant-panel, .countdown-box, .progress-box, .analysis-card, .stat-card, .chart-box, .trade-form, .filter-bar, .mufredat-container { background: var(--bg-surface-grad); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05); position: relative; }
+        .ai-assistant-panel { flex: 1.5; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--accent); }
+        .ai-header-left { display: flex; align-items: center; gap: 1.25rem; }
+        .ai-icon { font-size: 2.2rem; filter: drop-shadow(0 0 10px var(--accent-glow)); }
+        .ai-content h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.2rem; letter-spacing: 0.5px; }
+        .ai-content p { font-size: 0.85rem; color: var(--text-muted); }
+        .countdown-box { flex: 1.2; padding: 1.25rem 1.5rem; display: flex; flex-direction: column; justify-content: center; align-items: center; border-left: 4px solid var(--warning); }
+        .cd-title { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem; font-family: 'Poppins', sans-serif; font-weight: 600; letter-spacing: 0.5px; text-align: center; }
+        .cd-timer { display: flex; gap: 1.25rem; }
+        .cd-item { display: flex; flex-direction: column; align-items: center; min-width: 45px; }
+        .cd-val { font-size: 1.6rem; font-weight: 700; font-family: 'Poppins', sans-serif; line-height: 1; text-shadow: 0 0 15px rgba(255,255,255,0.1); }
+        .cd-lbl { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem; font-weight: 500; }
+        .progress-box { flex: 1; padding: 1.25rem 1.5rem; display: flex; flex-direction: column; justify-content: center; gap: 0.85rem; }
+        .progress-info { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted); font-family: 'Poppins', sans-serif; }
+        .progress-bar-bg { width: 100%; background: var(--bg-panel); height: 10px; border-radius: 5px; overflow: hidden; border: 1px solid var(--border); }
+        .progress-bar-fill { background: linear-gradient(90deg, var(--accent), #ff913d); height: 100%; width: 0%; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 15px var(--accent-glow); }
+
+        .middle-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1.5rem; margin-bottom: 1.5rem; flex-shrink: 0; }
+        .analysis-card, .stat-card { padding: 1.25rem; display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s; }
+        .analysis-card:hover, .stat-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1); border-color: var(--border-light); }
+        .analysis-card h3 { font-size: 0.85rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.5px; }
+        .task-list { list-style: none; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.6rem; }
+        .task-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03); }
+        .task-item span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%; }
+        .task-item strong { font-size: 0.75rem; font-family: 'Poppins', sans-serif; }
+
+        .stat-card { justify-content: space-between; }
+        .stat-card.c-soru { border-left: 4px solid var(--accent); }
+        .stat-card.c-net { border-left: 4px solid var(--info); }
+        .stat-card.c-ders { border-left: 4px solid var(--success); }
+        .stat-card h4 { font-size: 0.8rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; }
+        .stat-card .val { font-family: 'Poppins', sans-serif; font-size: 2.2rem; font-weight: 700; line-height: 1; margin-bottom: 1rem; text-shadow: 0 0 20px rgba(255,255,255,0.15); }
+        .stat-list { font-size: 0.8rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.4rem; border-top: 1px dashed var(--border); padding-top: 0.75rem; }
+        .stat-list span { float: right; font-weight: 600; font-family: 'Poppins', sans-serif; }
+
+        .charts-container { display: flex; gap: 1.5rem; flex: 1; min-height: 0; }
+        .chart-box { padding: 1.5rem; display: flex; flex-direction: column; flex: 1; min-height: 300px; }
+        .chart-box h3 { font-size: 0.9rem; font-weight: 500; margin-bottom: 1rem; text-align: center; }
+        .canvas-container { position: relative; flex: 1; width: 100%; min-height: 0; }
+
+        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: inline-flex; justify-content: center; align-items: center; text-align: center; position: relative; z-index: 10; }
+        .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 4px 15px var(--accent-glow); }
+        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,107,0,0.4); }
+        .btn-outline { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+        .btn-outline:hover { background: var(--accent); color: #fff; box-shadow: 0 4px 15px var(--accent-glow); }
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 6px; font-family: 'Poppins', sans-serif; }
+        .btn-danger:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
+        .btn-success { background: var(--success); color: #fff; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); padding: 1rem 2rem; font-size: 1.1rem;}
+        .btn-success:hover { background: #0ea5e9; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4); }
+
+        .trade-form, .filter-bar { padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; flex-shrink: 0; position: relative; z-index: 10; }
+        .form-row { display: flex; gap: 1.25rem; flex-wrap: wrap; align-items: flex-end; }
+        .input-group { display: flex; flex-direction: column; flex: 1; min-width: 140px; }
+        .input-group label, .filter-bar label { font-family: 'Poppins', sans-serif; font-size: 0.8rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.5rem; }
+        input, select { padding: 0.65rem 1rem; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; color: var(--text-main); font-family: 'Roboto', sans-serif; font-size: 0.95rem; outline: none; transition: all 0.2s; width: 100%; position: relative; z-index: 10; }
+        input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); background: rgba(0,0,0,0.5); }
+        .filter-bar { display: flex; align-items: center; gap: 1.5rem; }
+
+        .table-responsive { flex: 1; overflow-y: auto; overflow-x: auto; background: var(--bg-surface-grad); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05); position: relative; z-index: 5; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left; min-width: 800px; }
+        th { background: rgba(0,0,0,0.4); color: var(--text-muted); font-size: 0.75rem; font-weight: 600; padding: 1rem 1.5rem; border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 10; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+        td { padding: 0.85rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; white-space: nowrap; position: relative; }
+        tr:hover td { background: rgba(255,255,255,0.03); }
+        #konuTableBody td { padding: 0.6rem 1rem; text-align: center !important; }
+        #konu-tab table th { padding: 0.8rem 1rem; text-align: center !important; }
+        .subject-name { display: block; margin-bottom: 0.4rem; font-weight: 500; font-size: 0.85rem; white-space: normal; line-height: 1.3; }
+        .routine-text { color: var(--info); font-size: 0.8rem; font-style: italic; font-weight: 600; }
+        .status-btn { display: inline-block; padding: 0.4rem 0.8rem; border: 1px solid var(--border-light); border-radius: 20px; cursor: pointer; font-size: 0.75rem; font-weight: 500; color: var(--text-muted); background: rgba(0,0,0,0.3); min-width: 100px; transition: all 0.2s; font-family: 'Poppins', sans-serif; position: relative; z-index: 20; }
+        .status-btn.yesil { background-color: rgba(16, 185, 129, 0.15); color: var(--success); border-color: rgba(16, 185, 129, 0.4); }
+        .status-btn.kirmizi { background-color: rgba(239, 68, 68, 0.15); color: var(--danger); border-color: rgba(239, 68, 68, 0.4); }
+
+        .deneme-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; padding-top: 1.25rem; margin-top: 1rem; border-top: 1px dashed var(--border); }
+        .d-input-group { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+        .d-input-group input { width: 100%; padding: 0.5rem; text-align: center; }
+        .d-input-group label { width: 20px; margin-bottom: 0; font-family: 'Poppins', sans-serif; font-weight: 600; }
+
+        /* MÜFREDAT PANELİ ÖZEL CSS */
+        .mufredat-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 1.5rem; }
+        .mufredat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; overflow-y: auto; flex: 1; padding-right: 1rem; margin-bottom: 1.5rem; }
+        .ders-kutu { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; }
+        .ders-kutu h3 { color: var(--accent); margin-bottom: 1rem; border-bottom: 1px dashed var(--border); padding-bottom: 0.5rem; font-size: 1rem; text-align: center; }
+        .konu-listesi { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+        .konu-m-item { padding: 0.5rem; background: rgba(255,255,255,0.03); border-radius: 6px; cursor: pointer; transition: all 0.2s; font-size: 0.85rem; user-select: none; }
+        .konu-m-item:hover { background: rgba(255,255,255,0.08); }
+        .konu-m-item.tamam { text-decoration: line-through; color: var(--success); opacity: 0.6; background: rgba(16, 185, 129, 0.1); }
+        .kalibre-alan { text-align: center; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+        .color-success { color: var(--success) !important; }
+        .color-danger { color: var(--danger) !important; }
+        .color-warning { color: var(--warning) !important; }
+        .color-accent { color: var(--accent) !important; }
+        .fw-bold { font-weight: 600 !important; }
+
+        @media (max-width: 992px) { .middle-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 768px) {
+            body { display: block; padding: 0; height: auto; overflow-y: auto; }
+            .container { width: 100%; height: auto; min-height: 100vh; border-radius: 0; border: none; padding: 1rem; display: block; }
+            .tab-content { height: auto; overflow: visible; }
+            .header-title { font-size: 1.2rem; justify-content: center; text-align: center; flex-wrap: wrap; }
+            .tabs { gap: 0.5rem; overflow-x: auto; padding-bottom: 0.5rem; justify-content: flex-start; }
+            .tab-btn { font-size: 0.85rem; padding: 0.5rem; }
+            .top-row, .ai-assistant-panel, .ai-header-left, .charts-container, .trade-form .form-row, .filter-bar { flex-direction: column; align-items: stretch; }
+            .ai-assistant-panel { text-align: center; gap: 1rem; }
+            .middle-grid { grid-template-columns: 1fr; }
+            .chart-box { min-height: 250px; }
+            .filter-bar select { width: 100%; }
+            .motivation-box { padding: 2rem 1.5rem; }
+            .motivation-box h2 { font-size: 1.5rem; }
+            .motivation-text { font-size: 1.1rem; margin-bottom: 2rem; }
+            .btn-primary { width: 100%; padding: 1rem; }
+            .deneme-grid { grid-template-columns: repeat(2, 1fr); }
+            table th, table td { padding: 0.75rem 0.5rem; font-size: 0.8rem; }
+            .mufredat-grid { grid-template-columns: 1fr; }
+        }
+        
+        .cloud-indicator { position: absolute; top: 1.5rem; right: 2.5rem; font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 8px; font-family: 'Poppins', sans-serif; }
+        .cloud-dot { width: 10px; height: 10px; border-radius: 50%; background-color: var(--danger); box-shadow: 0 0 10px var(--danger); }
+        .cloud-dot.online { background-color: var(--success); box-shadow: 0 0 10px var(--success); }
+    </style>
+</head>
+<body>
+
+<datalist id="kpssTumKonular"></datalist>
+
+<div class="motivation-overlay" id="motivationOverlay">
+    <div class="motivation-box">
+        <h2 style="color: var(--accent); margin-bottom: 1.5rem; text-shadow: 0 0 25px var(--accent-glow); letter-spacing: 1px;">KRONOS: GÜNLÜK BRİFİNG</h2>
+        <p id="dailyMotivationText" class="motivation-text"></p>
+        <button class="btn btn-primary" style="font-size: 1rem; border-radius: 50px; text-transform: uppercase;" onclick="closeMotivation()">Hedefe Kilitlen, Masaya Geç 🚀</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="kronosModal">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeKronos()">×</button>
+        <div class="kronos-header">
+            <div class="ai-icon" style="font-size: 2.5rem; color: var(--accent);">👁️‍🗨️</div>
+            <div class="kronos-title">KRONOS<br><span style="font-size:0.85rem; color:var(--text-muted); font-weight:400; font-family:'Roboto', sans-serif;">Yapay Zeka Strateji Koçu</span></div>
+        </div>
+        <div id="kronosReportContent"></div>
+        <div style="text-align:center; margin-top:1.5rem; font-size:0.85rem; color:var(--text-muted); font-style:italic;">
+            "Sınavı çok çalışan değil, zamanı ve kör noktalarını iyi yöneten kazanır." - Kronos
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="cloud-indicator" id="cloudStatus">
+        <div class="cloud-dot" id="cloudDot"></div> <span id="cloudText">Bulut Kapalı</span>
+    </div>
+
+    <div class="header-title">
+        KPSS 2026 ORTAÖĞRETİM <span>/</span> KOMUTA MERKEZİ
+    </div>
+    
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('ozet-tab')">Genel Özet</button>
+        <button class="tab-btn" onclick="switchTab('mufredat-tab')">Müfredat & Kalibre</button>
+        <button class="tab-btn" onclick="switchTab('konu-tab')">Güncel Program</button>
+        <button class="tab-btn" onclick="switchTab('soru-tab')">Soru Çözümü</button>
+        <button class="tab-btn" onclick="switchTab('deneme-tab')">Deneme Sınavları</button>
+    </div>
+
+    <div id="ozet-tab" class="tab-content active">
+        <div class="top-row">
+            <div class="ai-assistant-panel">
+                <div class="ai-header-left">
+                    <div class="ai-icon">🧠</div>
+                    <div class="ai-content">
+                        <h3>KRONOS YAPAY ZEKA</h3>
+                        <p>Verilerinizi tarayıp stratejik rapor sunar.</p>
+                    </div>
+                </div>
+                <button class="btn btn-outline" onclick="generateKronosReport()">Rapor Oluştur</button>
+            </div>
+            <div class="countdown-box">
+                <div class="cd-title">KPSS ORTAÖĞRETİM (25 EKİM 2026)</div>
+                <div class="cd-timer">
+                    <div class="cd-item"><span class="cd-val" id="cd-days">00</span><span class="cd-lbl">GÜN</span></div>
+                    <div class="cd-item"><span class="cd-val" id="cd-hours">00</span><span class="cd-lbl">SAAT</span></div>
+                    <div class="cd-item"><span class="cd-val" id="cd-minutes">00</span><span class="cd-lbl">DAK.</span></div>
+                    <div class="cd-item"><span class="cd-val color-accent" id="cd-seconds">00</span><span class="cd-lbl">SAN.</span></div>
+                </div>
+            </div>
+            <div class="progress-box">
+                <div class="progress-info">
+                    <span>Müfredat İlerlemesi</span>
+                    <span id="konuSayaci" style="font-family:'Roboto', sans-serif; font-weight:500;">0 / 0</span>
+                </div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill" id="konuProgressBar"></div></div>
+                <div class="progress-info">
+                    <span>Tamamlanan Oran</span>
+                    <span id="konuProgressYuzde" class="color-accent fw-bold" style="font-size: 1.1rem; text-shadow: 0 0 10px rgba(255,107,0,0.3);">%0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="middle-grid">
+            <div class="analysis-card" style="border-top: 3px solid var(--danger);">
+                <h3 class="color-danger">Eksik Görevler</h3><ul class="task-list" id="aiCalendarTasks"></ul>
+            </div>
+            <div class="analysis-card" style="border-top: 3px solid var(--warning);">
+                <h3 class="color-warning">Net Düşürenler</h3><ul class="task-list" id="aiWeakTasks"></ul>
+            </div>
+            <div class="analysis-card" style="border-top: 3px solid var(--success);">
+                <h3 class="color-success">Güçlü Konular</h3><ul class="task-list" id="aiStrongTasks"></ul>
+            </div>
+            <div class="stat-card c-soru">
+                <h4>Çözülen Soru</h4><div class="val" id="dashTotalSoru">0</div>
+                <div class="stat-list">Doğru <span id="dashDogru" class="color-success">0</span> Yanlış <span id="dashYanlis" class="color-danger">0</span></div>
+            </div>
+            <div class="stat-card c-net">
+                <h4>Ort. Deneme Neti</h4><div class="val" id="dashOrtDeneme">0.00</div>
+                <div class="stat-list">Genel Yetenek <span id="dashOrtGY">0.00</span> Genel Kültür <span id="dashOrtGK">0.00</span></div>
+            </div>
+            <div class="stat-card c-ders">
+                <h4 style="color: var(--success);">En Verimli Ders</h4>
+                <div class="val color-success" id="dashBestLesson" style="font-size: 1.6rem; margin-top: 0.5rem;">-</div>
+            </div>
+        </div>
+
+        <div class="charts-container">
+            <div class="chart-box">
+                <h3>Deneme Sınavları Gelişim Grafiği</h3>
+                <div class="canvas-container"><canvas id="denemeChart"></canvas></div>
+            </div>
+            <div class="chart-box">
+                <h3>Derslere Göre Net Analizi</h3>
+                <div class="canvas-container"><canvas id="netChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="mufredat-tab" class="tab-content">
+        <div class="mufredat-container">
+            <p style="color:var(--text-muted); font-size:0.9rem; text-align:center; margin-bottom:1.5rem;">
+                Bitirdiğin konuların üzerine tıklayarak çiz. Ardından aşağıdaki butona basarak kalan günleri (Günde 1 Ders Odaklı, Vatandaşlık Sonda) baştan planla.
+            </p>
+            <div class="mufredat-grid" id="mufredatGridPaneli"></div>
+            <div class="kalibre-alan">
+                <button class="btn btn-success" onclick="sistemiKalibreEt()">Günde 1 Ders Formunda Yeniden Kalibre Et 🔄</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="konu-tab" class="tab-content">
+        <div class="filter-bar"><label>Hafta Seçimi</label><select id="weekSelect" onchange="haftayiGoster()"></select></div>
+        <div class="table-responsive">
+            <table>
+                <thead><tr><th>GÜN</th><th>RUTİN HEDEF</th><th>TÜRKÇE</th><th>MATEMATİK</th><th>TARİH</th><th>COĞRAFYA</th><th>VATANDAŞLIK</th></tr></thead>
+                <tbody id="konuTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="soru-tab" class="tab-content">
+        <div class="dashboard" id="soruDersDashboard" style="margin-bottom: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; flex-shrink: 0;"></div>
+        <div class="trade-form">
+            <div class="form-row">
+                <div class="input-group"><label>Tarih</label><input type="date" id="inpTarih"></div>
+                <div class="input-group">
+                    <label>Ders Seçimi</label>
+                    <select id="inpDers" onchange="updateKonuListesi()">
+                        <option value="Türkçe">Türkçe</option><option value="Matematik">Matematik</option><option value="Tarih">Tarih</option><option value="Coğrafya">Coğrafya</option><option value="Vatandaşlık">Vatandaşlık</option>
+                    </select>
+                </div>
+                <div class="input-group" style="flex: 2;"><label>Çözülen Konu</label><input type="text" id="inpKonu" list="kpssTumKonular" placeholder="Ders seçin, konular listelensin..." autocomplete="off"></div>
+                <div class="input-group"><label>Soru</label><input type="number" id="inpToplam" placeholder="0"></div>
+                <div class="input-group"><label>Doğru</label><input type="number" id="inpDogru" placeholder="0"></div>
+                <div class="input-group"><label>Yanlış</label><input type="number" id="inpYanlis" placeholder="0"></div>
+            </div>
+            <div class="form-row" style="justify-content: flex-end; margin-top: 1.5rem;">
+                 <button class="btn btn-primary" onclick="kaydetSoru()">İstatistiğe Ekle</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead><tr><th>TARİH</th><th>DERS</th><th>KONU ADI</th><th style="text-align: right;">SORU</th><th style="text-align: right;">DOĞRU</th><th style="text-align: right;">YANLIŞ</th><th style="text-align: right;">BOŞ</th><th style="text-align: right;">NET</th><th style="text-align: center;">İŞLEM</th></tr></thead>
+                <tbody id="soruListesi"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="deneme-tab" class="tab-content">
+        <div class="trade-form">
+            <div class="form-row">
+                <div class="input-group" style="flex: 1;"><label>Tarih</label><input type="date" id="denemeTarih"></div>
+                <div class="input-group" style="flex: 3;"><label>Deneme Adı / Yayın</label><input type="text" id="denemeAdi" placeholder="Örn: Türkiye Geneli TG-1" autocomplete="off"></div>
+            </div>
+            <div class="deneme-grid">
+                <div>
+                    <label style="font-size:0.8rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:0.5rem; font-family:'Poppins', sans-serif;">TÜRKÇE (30)</label>
+                    <div class="d-input-group"><label>D</label><input type="number" id="dTrD" min="0" max="30"></div><div class="d-input-group"><label>Y</label><input type="number" id="dTrY" min="0" max="30"></div>
+                </div>
+                <div>
+                    <label style="font-size:0.8rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:0.5rem; font-family:'Poppins', sans-serif;">MATEMATİK (30)</label>
+                    <div class="d-input-group"><label>D</label><input type="number" id="dMatD" min="0" max="30"></div><div class="d-input-group"><label>Y</label><input type="number" id="dMatY" min="0" max="30"></div>
+                </div>
+                <div>
+                    <label style="font-size:0.8rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:0.5rem; font-family:'Poppins', sans-serif;">TARİH (27)</label>
+                    <div class="d-input-group"><label>D</label><input type="number" id="dTarD" min="0" max="27"></div><div class="d-input-group"><label>Y</label><input type="number" id="dTarY" min="0" max="27"></div>
+                </div>
+                <div>
+                    <label style="font-size:0.8rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:0.5rem; font-family:'Poppins', sans-serif;">COĞRAFYA (18)</label>
+                    <div class="d-input-group"><label>D</label><input type="number" id="dCogD" min="0" max="18"></div><div class="d-input-group"><label>Y</label><input type="number" id="dCogY" min="0" max="18"></div>
+                </div>
+                <div>
+                    <label style="font-size:0.8rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:0.5rem; font-family:'Poppins', sans-serif;">VATANDAŞLIK (15)</label>
+                    <div class="d-input-group"><label>D</label><input type="number" id="dVatD" min="0" max="15"></div><div class="d-input-group"><label>Y</label><input type="number" id="dVatY" min="0" max="15"></div>
+                </div>
+            </div>
+            <div class="form-row" style="justify-content: flex-end; margin-top: 1.5rem;"><button class="btn btn-primary" onclick="kaydetDeneme()">Denemeyi Kaydet</button></div>
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead><tr><th>TARİH</th><th>DENEME / YAYIN</th><th style="text-align: right;">TÜRKÇE</th><th style="text-align: right;">MAT</th><th style="text-align: right;">TARİH</th><th style="text-align: right;">COĞ</th><th style="text-align: right;">VAT</th><th style="text-align: right;">GY NET</th><th style="text-align: right;">GK NET</th><th style="text-align: right;">TOP. NET</th><th style="text-align: center;">İŞLEM</th></tr></thead>
+                <tbody id="denemeListesi"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // 🚀 FIREBASE (BULUT) AYARLARI BURAYA GELECEK
+    // ==========================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyByn53bm3_93862Jyj9EbtBeFwUeEG-zIs",
+        authDomain: "kpss-b5aca.firebaseapp.com",
+        databaseURL: "https://kpss-b5aca-default-rtdb.firebaseio.com",
+        projectId: "kpss-b5aca",
+        storageBucket: "kpss-b5aca.firebasestorage.app",
+        messagingSenderId: "941357577104",
+        appId: "1:941357577104:web:57168e9bbdf37c82313915"
+    };
+
+    let cloudEnabled = false;
+    let kpssProgrami = [];
+
+    if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "BURAYA_YAPISTIR") {
+        firebase.initializeApp(firebaseConfig);
+        cloudEnabled = true;
+        document.getElementById("cloudDot").classList.add("online");
+        document.getElementById("cloudText").innerText = "Bulut Aktif";
+
+        firebase.database().ref('kpss_verilerim').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                localStorage.setItem("kpssKonuDurumlari_orta_v3", JSON.stringify(data.konular || {}));
+                localStorage.setItem("kpssSoruVerileri_orta_v3", JSON.stringify(data.sorular || []));
+                localStorage.setItem("kpssDenemeVerileri_orta_v3", JSON.stringify(data.denemeler || []));
+                localStorage.setItem("kpssMufredat_orta_v3", JSON.stringify(data.mufredat || {}));
+                if(data.program) {
+                    localStorage.setItem("kpssProgram_orta_v3", JSON.stringify(data.program));
+                    kpssProgrami = data.program;
+                }
+                renderMufredat(); haftayiGoster(); updateDashboard(); renderDeneme();
+            }
+        });
+    }
+
+    function pushToCloud() {
+        if (!cloudEnabled) return;
+        const konular = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v3")) || {};
+        const sorular = JSON.parse(localStorage.getItem("kpssSoruVerileri_orta_v3")) || [];
+        const denemeler = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v3")) || [];
+        const mufredat = JSON.parse(localStorage.getItem("kpssMufredat_orta_v3")) || {};
+        const program = JSON.parse(localStorage.getItem("kpssProgram_orta_v3")) || [];
+        
+        firebase.database().ref('kpss_verilerim').set({
+            konular: konular, sorular: sorular, denemeler: denemeler, mufredat: mufredat, program: program, sonGuncelleme: Date.now()
+        });
+    }
+    // ==========================================
+
+    const motivasyonSozleri = [
+        "Denemelerdeki her yanlış, sınavdaki bir doğrunun habercisidir. Yanlışlarından öğren ve yola devam et!",
+        "Bugün masada harcadığın her dakika, sınav günü sana ekstra bir net olarak dönecek.",
+        "Mazeret yok, ertelemek yok. Sınavı sadece çok çalışan değil, zamanını en iyi yöneten kazanır.",
+        "KPSS bir sprint değil, maratondur. Bugün attığın istikrarlı adımlar, 25 Ekim'deki büyük zaferin habercisi.",
+        "Şu an yorucu gelebilir ama o atanma ekranını gördüğündeki his her şeye değecek. Hadi, sadece odaklan!"
+    ];
+
+    function showMotivation() {
+        const randomIndex = Math.floor(Math.random() * motivasyonSozleri.length);
+        document.getElementById("dailyMotivationText").innerText = `"${motivasyonSozleri[randomIndex]}"`;
+        document.getElementById("motivationOverlay").classList.add("active");
+    }
+
+    function closeMotivation() { document.getElementById("motivationOverlay").classList.remove("active"); }
+
+    const tumDersler = {
+        'Türkçe': ["Sözcükte Anlam", "Cümlede Anlam", "Paragraf", "Dil Bilgisi", "Ses Bilgisi", "Anlatım Bozuklukları", "Yazım Yanlışları", "Noktalama İşaretleri", "Sözel Mantık"],
+        'Matematik': ["Temel Kavramlar", "Rasyonel Sayılar", "Köklü Sayılar", "Üslü Sayılar", "Matematiksel İlişkilerden Yararlanma", "Problemler", "Tablo, Grafik Okuma ve Yorumlama", "Sayısal Mantık", "Temel Geometri"],
+        'Tarih': ["İlk Türk Devletleri", "Türk-İslam Devletleri", "Osmanlı Devleti", "Kurtuluş Savaşı", "Atatürk İlke ve İnkılapları", "Çağdaş Türk ve Dünya Tarihi"],
+        'Coğrafya': ["Türkiye’nin Coğrafi Konumu", "Türkiye’nin İklimi ve Bitki Örtüsü", "Türkiye’nin Fiziki Özellikleri", "Türkiye’nin Beşeri Özellikleri", "Türkiye’nin Ekonomik Özellikleri"],
+        'Vatandaşlık': ["Temel Hukuk Kavramları", "Yasama, Yürütme, Yargı", "İdare Hukuku", "Güncel Bilgiler"]
+    };
+
+    const gunler = ["Pazar", "Pzt", "Salı", "Çar", "Per", "Cuma", "Cmt"];
+    const aylar = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+
+    document.addEventListener("DOMContentLoaded", () => {
+        showMotivation();
+        if (!localStorage.getItem("kpssProgram_orta_v3")) sistemiKalibreEt(); // İlk açılışta program yoksa oluştur
+        else {
+            kpssProgrami = JSON.parse(localStorage.getItem("kpssProgram_orta_v3"));
+            renderMufredat(); haftayiGoster(); updateDashboard(); renderDeneme();
+        }
+        document.getElementById('inpTarih').valueAsDate = new Date(); document.getElementById('denemeTarih').valueAsDate = new Date();
+        updateKonuListesi(); baslatGeriSayim();
+    });
+
+    // MÜFREDAT İŞLEMLERİ
+    function renderMufredat() {
+        const mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v3")) || {};
+        let html = '';
+        for (const [dersAd, konular] of Object.entries(tumDersler)) {
+            html += `<div class="ders-kutu"><h3>${dersAd}</h3><ul class="konu-listesi">`;
+            konular.forEach(k => {
+                let id = dersAd + "_" + k;
+                let isDone = mufredatData[id] ? "tamam" : "";
+                html += `<li class="konu-m-item ${isDone}" onclick="toggleMufredat('${id}')">${k}</li>`;
+            });
+            html += `</ul></div>`;
+        }
+        document.getElementById("mufredatGridPaneli").innerHTML = html;
+        updateDashboard();
+    }
+
+    function toggleMufredat(id) {
+        let mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v3")) || {};
+        if(mufredatData[id]) delete mufredatData[id]; else mufredatData[id] = true;
+        localStorage.setItem("kpssMufredat_orta_v3", JSON.stringify(mufredatData));
+        renderMufredat(); pushToCloud();
+    }
+
+    // YENİDEN KALİBRASYON (1 DERS & VATANDAŞLIK SONDA)
+    function sistemiKalibreEt() {
+        let mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v3")) || {};
+        let kalanKonular = { 'Türkçe':[], 'Matematik':[], 'Tarih':[], 'Coğrafya':[], 'Vatandaşlık':[] };
+        
+        for (const [dersAd, konular] of Object.entries(tumDersler)) {
+            konular.forEach(k => { if(!mufredatData[dersAd+"_"+k]) kalanKonular[dersAd].push(k); });
+        }
+
+        let currentDate = new Date(); 
+        currentDate.setHours(0,0,0,0);
+        let examDate = new Date(2026, 9, 25); // 25 Ekim 2026
+        
+        if (currentDate >= examDate) { alert("Sınav tarihi geldi veya geçti!"); return; }
+
+        let tempProgram = [];
+        let wIndex = 1;
+        
+        // Ana derslerin dönme sırası (Vatandaşlık bilerek yok, sona kalacak)
+        let normalSira = ['Türkçe', 'Matematik', 'Tarih', 'Coğrafya'];
+        let normalIdx = 0;
+
+        while(currentDate < examDate) {
+            let d = currentDate.getDay(); 
+            let dateStr = `${currentDate.getDate()} ${aylar[currentDate.getMonth()]} ${gunler[d]}`;
+            let pRow = { gun: dateStr, w: wIndex, rutin: "-", tr: "-", mat: "-", tar: "-", cog: "-", vat: "-" };
+
+            if (d === 0 || d === 3) { // Çarşamba ve Pazar: Boş Gün
+                pRow.tr = "DİNLENME";
+            } else if (d === 6) { // Cumartesi: Deneme Günü
+                pRow.tr = "Genel Deneme & Analiz";
+                pRow.rutin = "Haftalık Tekrar";
+            } else { 
+                // Çalışma Günleri (Pzt, Sal, Per, Cum) -> 1 Ders Odaklı
+                pRow.rutin = "1 Saat Paragraf/Problem";
+                
+                let seciliDers = null;
+                let seciliKonu = null;
+
+                // Önce normal 4 dersi eritiyoruz (Vatandaşlık hariç)
+                let denemeSayisi = 0;
+                while(denemeSayisi < 4) {
+                    let aktifDers = normalSira[normalIdx];
+                    if (kalanKonular[aktifDers].length > 0) {
+                        seciliDers = aktifDers;
+                        seciliKonu = kalanKonular[aktifDers].shift();
+                        normalIdx = (normalIdx + 1) % 4; // Yarın diğer derse geç
+                        break;
+                    }
+                    normalIdx = (normalIdx + 1) % 4;
+                    denemeSayisi++;
+                }
+
+                // Normal 4 ders tamamen bittiyse veya sıra gelmiyorsa artık VATANDAŞLIK zamanı!
+                if (!seciliDers && kalanKonular['Vatandaşlık'].length > 0) {
+                    seciliDers = 'Vatandaşlık';
+                    seciliKonu = kalanKonular['Vatandaşlık'].shift();
+                }
+
+                // E her şey bittiyse de genel tekrar atalım bari
+                if (!seciliDers) {
+                    seciliDers = normalSira[normalIdx]; 
+                    seciliKonu = "Genel Soru Çözümü";
+                    normalIdx = (normalIdx + 1) % 4;
+                }
+
+                // Seçilen dersi tablodaki kendi sütununa yazdır
+                if (seciliDers === 'Türkçe') pRow.tr = seciliKonu;
+                else if (seciliDers === 'Matematik') pRow.mat = seciliKonu;
+                else if (seciliDers === 'Tarih') pRow.tar = seciliKonu;
+                else if (seciliDers === 'Coğrafya') pRow.cog = seciliKonu;
+                else if (seciliDers === 'Vatandaşlık') pRow.vat = seciliKonu;
+            }
+
+            tempProgram.push(pRow);
+            if (d === 0) wIndex++; 
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        kpssProgrami = tempProgram;
+        localStorage.setItem("kpssProgram_orta_v3", JSON.stringify(kpssProgrami));
+        localStorage.removeItem("kpssKonuDurumlari_orta_v3"); // Takvimi sıfırladığımız için butonları da sıfırlıyoruz.
+
+        alert("Sistem Kalibre Edildi! Günde 1 ders atanarak, Vatandaşlık sınava en yakın haftalara bırakıldı.");
+        switchTab('konu-tab');
+        haftayiGoster(); updateDashboard(); pushToCloud();
+    }
+
+    function haftayiGoster() {
+        if(kpssProgrami.length === 0) return;
+        const weekSelect = document.getElementById("weekSelect");
+        let currentSelection = weekSelect.value;
+        weekSelect.innerHTML = "";
+        let maxWeek = kpssProgrami[kpssProgrami.length-1].w;
+        for(let i=1; i<=maxWeek; i++) {
+            let opt = document.createElement("option"); opt.value = i; opt.innerText = i + ". Hafta"; 
+            if(i == currentSelection) opt.selected = true;
+            weekSelect.appendChild(opt);
+        }
+        if(!weekSelect.value) weekSelect.value = "1";
+
+        let seciliHafta = parseInt(weekSelect.value);
+        const tbody = document.getElementById("konuTableBody"); tbody.innerHTML = "";
+        let kayitliDurumlar = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v3")) || {};
+        let haftaVerisi = kpssProgrami.filter(item => item.w === seciliHafta);
+
+        haftaVerisi.forEach((row) => {
+            const tr = document.createElement("tr");
+            let html = `<td style="color:var(--text-muted); font-weight:600; font-size:0.8rem;">${row.gun}</td>`;
+            
+            if (row.tr === "DİNLENME") {
+                html += `<td>-</td><td colspan="5" style="text-align:center; background: rgba(16, 185, 129, 0.05);"><span style="color:var(--success); font-style:italic; font-size:0.9rem; font-weight:600; letter-spacing: 2px;">☕ DİNLENME & RECOVERY</span></td>`;
+            } else if (row.tr === "Genel Deneme & Analiz") {
+                let benzersizId = `btn_${row.gun.replace(/\s+/g, '')}_Ozel_${row.w}`;
+                let durum = kayitliDurumlar[benzersizId] || "Bekliyor";
+                let btnClass = "status-btn " + (durum==="Tamamlandı"?"yesil":durum==="Yapılmadı"?"kirmizi":"");
+                html += `<td><span class="routine-text">${row.rutin}</span></td><td colspan="5" style="text-align:center; background: rgba(255, 107, 0, 0.05);">
+                    <span style="color:var(--accent); font-weight:600; display:block; margin-bottom:5px;">🎯 ${row.tr}</span>
+                    <button id="${benzersizId}" class="${btnClass}" data-durum="${durum}" onclick="durumDegistir('${benzersizId}')">${durum}</button>
+                </td>`;
+            } else {
+                html += `<td><span class="routine-text">${row.rutin}</span></td>`;
+                
+                // Dersleri döngüyle basıyoruz ve asıl DERS ADINI da butona gönderiyoruz (Senkronizasyon için)
+                let dersObjeleri = { 'tr':'Türkçe', 'mat':'Matematik', 'tar':'Tarih', 'cog':'Coğrafya', 'vat':'Vatandaşlık' };
+                
+                Object.keys(dersObjeleri).forEach(dersKodu => {
+                    if (row[dersKodu] === "-") {
+                        html += `<td><span style="color:var(--border-light); font-size:1.4rem;">-</span></td>`;
+                    } else {
+                        let gercekDersAdi = dersObjeleri[dersKodu];
+                        let benzersizId = `btn_${row.gun.replace(/\s+/g, '')}_${dersKodu}_${row.w}`;
+                        let durum = kayitliDurumlar[benzersizId] || "Bekliyor";
+                        let btnClass = "status-btn"; if (durum === "Tamamlandı") btnClass += " yesil"; if (durum === "Yapılmadı") btnClass += " kirmizi";
+                        let safeKonu = row[dersKodu].replace(/'/g, "\\'"); // Tırnak hatalarını önlemek için
+                        
+                        // BUTONA ARTIK GERÇEK DERS ADI VE KONU ADI GİDİYOR
+                        html += `<td><span class="subject-name">${row[dersKodu]}</span><button id="${benzersizId}" class="${btnClass}" data-durum="${durum}" onclick="durumDegistir('${benzersizId}', '${gercekDersAdi}', '${safeKonu}')">${durum}</button></td>`;
+                    }
+                });
+            }
+            tr.innerHTML = html; tbody.appendChild(tr);
+        });
+    }
+
+    // ARTIK SENKRONİZE ÇALIŞAN BUTON FONKSİYONU
+    function durumDegistir(btnId, dersAdi = null, konuAdi = null) {
+        let btn = document.getElementById(btnId);
+        let kayitliDurumlar = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v3")) || {};
+        let mevcutDurum = btn.getAttribute("data-durum") || "Bekliyor";
+
+        if (mevcutDurum === "Bekliyor") { 
+            btn.innerText = "Tamamlandı"; btn.setAttribute("data-durum", "Tamamlandı"); btn.className = "status-btn yesil"; 
+        } 
+        else if (mevcutDurum === "Tamamlandı") { 
+            btn.innerText = "Yapılmadı"; btn.setAttribute("data-durum", "Yapılmadı"); btn.className = "status-btn kirmizi"; 
+        } 
+        else { 
+            btn.innerText = "Bekliyor"; btn.setAttribute("data-durum", "Bekliyor"); btn.className = "status-btn"; 
+        }
+
+        let yeniDurum = btn.getAttribute("data-durum");
+        kayitliDurumlar[btnId] = yeniDurum;
+        localStorage.setItem("kpssKonuDurumlari_orta_v3", JSON.stringify(kayitliDurumlar)); 
+        
+        // 🔄 MÜFREDAT SENKRONİZASYONU (SADECE GERÇEK KONUYSA ÇALIŞIR)
+        if (dersAdi && konuAdi && konuAdi !== "Genel Soru Çözümü") {
+            let mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v3")) || {};
+            let mufId = dersAdi + "_" + konuAdi;
+            
+            // Eğer tıkladığımız şey gerçekten müfredatta olan bir konuysa üstünü çiz/aç
+            if(tumDersler[dersAdi] && tumDersler[dersAdi].includes(konuAdi)) {
+                if(yeniDurum === "Tamamlandı") {
+                    mufredatData[mufId] = true;
+                } else {
+                    delete mufredatData[mufId];
+                }
+                localStorage.setItem("kpssMufredat_orta_v3", JSON.stringify(mufredatData));
+                renderMufredat(); // Müfredat ekranını anında güncelle
+            }
+        }
+
+        updateDashboard(); pushToCloud();
+    }
+
+    function baslatGeriSayim() {
+        const sinavTarihi = new Date("2026-10-25T10:15:00").getTime();
+        setInterval(() => {
+            const simdi = new Date().getTime(); const fark = sinavTarihi - simdi;
+            if (fark < 0) return;
+            const gun = Math.floor(fark / (1000 * 60 * 60 * 24)); const saat = Math.floor((fark % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const dakika = Math.floor((fark % (1000 * 60 * 60)) / (1000 * 60)); const saniye = Math.floor((fark % (1000 * 60)) / 1000);
+            document.getElementById("cd-days").innerText = gun.toString().padStart(2, '0'); document.getElementById("cd-hours").innerText = saat.toString().padStart(2, '0');
+            document.getElementById("cd-minutes").innerText = dakika.toString().padStart(2, '0'); document.getElementById("cd-seconds").innerText = saniye.toString().padStart(2, '0');
+        }, 1000);
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        let buttons = document.querySelectorAll('.tab-btn');
+        for(let btn of buttons) { if(btn.getAttribute('onclick').includes(tabId)) btn.classList.add('active'); }
+        if(tabId === 'ozet-tab') updateDashboard();
+        if(tabId === 'konu-tab') haftayiGoster();
+    }
+
+    function updateKonuListesi() {
+        let seciliDers = document.getElementById("inpDers").value;
+        let dl = document.getElementById("kpssTumKonular"); dl.innerHTML = '';
+        tumDersler[seciliDers].forEach(k => { let opt = document.createElement("option"); opt.value = k; dl.appendChild(opt); });
+        document.getElementById("inpKonu").value = '';
+    }
+
+    function kaydetSoru() {
+        const tarih = document.getElementById("inpTarih").value; const ders = document.getElementById("inpDers").value;
+        const konu = document.getElementById("inpKonu").value.trim() || "Genel Soru Çözümü";
+        const toplam = parseInt(document.getElementById("inpToplam").value) || 0;
+        const dogru = parseInt(document.getElementById("inpDogru").value) || 0; const yanlis = parseInt(document.getElementById("inpYanlis").value) || 0;
+        if (!tarih || toplam <= 0) return; if (toplam < (dogru + yanlis)) { alert("Hata: Doğru ve yanlışın toplamı soru sayısını geçemez!"); return; }
+        let bos = toplam - (dogru + yanlis); let net = dogru - (yanlis * 0.25);
+        let soruListesi = JSON.parse(localStorage.getItem("kpssSoruVerileri_orta_v3")) || [];
+        soruListesi.push({ id: Date.now(), tarih, ders, konu, toplam, dogru, yanlis, bos, net });
+        soruListesi.sort((a, b) => new Date(b.tarih) - new Date(a.tarih));
+        localStorage.setItem("kpssSoruVerileri_orta_v3", JSON.stringify(soruListesi));
+        document.getElementById("inpKonu").value = ''; document.getElementById("inpToplam").value = '';
+        document.getElementById("inpDogru").value = ''; document.getElementById("inpYanlis").value = ''; 
+        updateDashboard(); pushToCloud();
+    }
+
+    function soruSil(id) {
+        let soruListesi = JSON.parse(localStorage.getItem("kpssSoruVerileri_orta_v3")) || [];
+        soruListesi = soruListesi.filter(k => k.id !== id);
+        localStorage.setItem("kpssSoruVerileri_orta_v3", JSON.stringify(soruListesi)); updateDashboard(); pushToCloud();
+    }
+
+    function calcNet(d, y) { return (d || 0) - ((y || 0) * 0.25); }
+    
+    function kaydetDeneme() {
+        const tarih = document.getElementById("denemeTarih").value; const adi = document.getElementById("denemeAdi").value.trim() || "Genel Deneme";
+        if (!tarih) return;
+        let trD = parseFloat(document.getElementById("dTrD").value) || 0; let trY = parseFloat(document.getElementById("dTrY").value) || 0;
+        let matD = parseFloat(document.getElementById("dMatD").value) || 0; let matY = parseFloat(document.getElementById("dMatY").value) || 0;
+        let tarD = parseFloat(document.getElementById("dTarD").value) || 0; let tarY = parseFloat(document.getElementById("dTarY").value) || 0;
+        let cogD = parseFloat(document.getElementById("dCogD").value) || 0; let cogY = parseFloat(document.getElementById("dCogY").value) || 0;
+        let vatD = parseFloat(document.getElementById("dVatD").value) || 0; let vatY = parseFloat(document.getElementById("dVatY").value) || 0;
+        let gyNet = calcNet(trD, trY) + calcNet(matD, matY); let gkNet = calcNet(tarD, tarY) + calcNet(cogD, cogY) + calcNet(vatD, vatY); let topNet = gyNet + gkNet;
+        let list = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v3")) || [];
+        list.push({ id: Date.now(), tarih, adi, tr: calcNet(trD,trY), mat: calcNet(matD,matY), tar: calcNet(tarD,tarY), cog: calcNet(cogD,cogY), vat: calcNet(vatD,vatY), gyNet, gkNet, topNet });
+        list.sort((a, b) => new Date(b.tarih) - new Date(a.tarih));
+        localStorage.setItem("kpssDenemeVerileri_orta_v3", JSON.stringify(list));
+        ['dTrD','dTrY','dMatD','dMatY','dTarD','dTarY','dCogD','dCogY','dVatD','dVatY','denemeAdi'].forEach(id => document.getElementById(id).value = '');
+        renderDeneme(); updateDashboard(); pushToCloud();
+    }
+
+    function silDeneme(id) {
+        let list = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v3")) || [];
+        list = list.filter(k => k.id !== id); localStorage.setItem("kpssDenemeVerileri_orta_v3", JSON.stringify(list));
+        renderDeneme(); updateDashboard(); pushToCloud();
+    }
+
+    function renderDeneme() {
+        let list = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v3")) || []; let html = '';
+        list.forEach(d => {
+            html += `<tr><td>${d.tarih.split("-").reverse().join(".")}</td><td><strong>${d.adi}</strong></td><td style="text-align: right;">${d.tr.toFixed(2)}</td><td style="text-align: right;">${d.mat.toFixed(2)}</td><td style="text-align: right;">${d.tar.toFixed(2)}</td><td style="text-align: right;">${d.cog.toFixed(2)}</td><td style="text-align: right;">${d.vat.toFixed(2)}</td><td style="text-align: right; color:var(--text-muted); font-weight:600;">${d.gyNet.toFixed(2)}</td><td style="text-align: right; color:var(--text-muted); font-weight:600;">${d.gkNet.toFixed(2)}</td><td style="text-align: right; color:var(--success); font-weight:700; font-size:1.1rem;">${d.topNet.toFixed(2)}</td><td style="text-align: center;"><button class="btn-danger" onclick="silDeneme(${d.id})">Sil</button></td></tr>`;
+        });
+        document.getElementById("denemeListesi").innerHTML = html;
+    }
+
+    function generateKronosReport() {
+        document.getElementById('kronosReportContent').innerHTML = "<div style='color:var(--text-muted); text-align:center;'>Sistemi verilerle beslemeye devam et. Rapor yakında üretilecek.</div>";
+        document.getElementById('kronosModal').classList.add('active');
+    }
+
+    function closeKronos() { document.getElementById('kronosModal').classList.remove('active'); }
+
+    function updateDashboard() {
+        let mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v3")) || {};
+        let totalKonu = 0; let tamamlananKonu = 0;
+        for (const konular of Object.values(tumDersler)) {
+            totalKonu += konular.length;
+        }
+        tamamlananKonu = Object.keys(mufredatData).length;
+
+        let yuzde = totalKonu === 0 ? 0 : Math.round((tamamlananKonu / totalKonu) * 100);
+        document.getElementById("konuSayaci").innerText = `${tamamlananKonu} / ${totalKonu}`; 
+        document.getElementById("konuProgressBar").style.width = `${yuzde}%`; 
+        document.getElementById("konuProgressYuzde").innerText = `%${yuzde}`;
+
+        let soruListesi = JSON.parse(localStorage.getItem("kpssSoruVerileri_orta_v3")) || [];
+        let stats = { 'Türkçe': { tot: 0, d: 0, y: 0, b:0, net: 0 }, 'Matematik': { tot: 0, d: 0, y: 0, b:0, net: 0 }, 'Tarih': { tot: 0, d: 0, y: 0, b:0, net: 0 }, 'Coğrafya': { tot: 0, d: 0, y: 0, b:0, net: 0 }, 'Vatandaşlık': { tot: 0, d: 0, y: 0, b:0, net: 0 }, 'GENEL': { tot: 0, d: 0, y: 0, b:0, net: 0 } };
+        let soruListesiHtml = '';
+
+        soruListesi.forEach(kayit => {
+            stats[kayit.ders].tot += kayit.toplam; stats[kayit.ders].d += kayit.dogru; stats[kayit.ders].y += kayit.yanlis; stats[kayit.ders].b += kayit.bos; stats[kayit.ders].net += kayit.net;
+            stats['GENEL'].tot += kayit.toplam; stats['GENEL'].d += kayit.dogru; stats['GENEL'].y += kayit.yanlis; stats['GENEL'].b += kayit.bos; stats['GENEL'].net += kayit.net;
+
+            let netRenk = kayit.net >= 0 ? "color:var(--success); font-weight:600;" : "color:var(--danger); font-weight:600;";
+            soruListesiHtml += `<tr><td>${kayit.tarih.split("-").reverse().join(".")}</td><td><strong>${kayit.ders}</strong></td><td><span style="color:var(--text-muted);">${kayit.konu}</span></td><td style="text-align: right; font-family:'Roboto', sans-serif;">${kayit.toplam}</td><td style="text-align: right; color:var(--success); font-family:'Roboto', sans-serif;">${kayit.dogru}</td><td style="text-align: right; color:var(--danger); font-family:'Roboto', sans-serif;">${kayit.yanlis}</td><td style="text-align: right; color:var(--text-muted); font-family:'Roboto', sans-serif;">${kayit.bos}</td><td style="text-align: right; ${netRenk} font-family:'Roboto', sans-serif;">${kayit.net.toFixed(2)}</td><td style="text-align: center;"><button class="btn-danger" onclick="soruSil(${kayit.id})">Sil</button></td></tr>`;
+        });
+        document.getElementById("soruListesi").innerHTML = soruListesiHtml;
+
+        let denemeList = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v3")) || [];
+        let dOrtGY = 0, dOrtGK = 0, dOrtTotal = 0;
+        if(denemeList.length > 0) {
+            dOrtGY = denemeList.reduce((sum, d) => sum + d.gyNet, 0) / denemeList.length; dOrtGK = denemeList.reduce((sum, d) => sum + d.gkNet, 0) / denemeList.length; dOrtTotal = denemeList.reduce((sum, d) => sum + d.topNet, 0) / denemeList.length;
+        }
+
+        document.getElementById('dashTotalSoru').innerText = stats['GENEL'].tot; document.getElementById('dashDogru').innerText = stats['GENEL'].d; document.getElementById('dashYanlis').innerText = stats['GENEL'].y;
+        document.getElementById('dashOrtDeneme').innerText = dOrtTotal.toFixed(2); document.getElementById('dashOrtGY').innerText = dOrtGY.toFixed(2); document.getElementById('dashOrtGK').innerText = dOrtGK.toFixed(2);
+
+        let bestLesson = "-"; let maxRate = -1;
+        ['Türkçe', 'Matematik', 'Tarih', 'Coğrafya', 'Vatandaşlık'].forEach(d => { if (stats[d].tot > 0) { let rate = stats[d].net / stats[d].tot; if (rate > maxRate) { maxRate = rate; bestLesson = d; } } });
+        document.getElementById('dashBestLesson').innerText = bestLesson;
+
+        let derslerListesi = ['Türkçe', 'Matematik', 'Tarih', 'Coğrafya', 'Vatandaşlık']; let dersDashboardHtml = '';
+        derslerListesi.forEach(d => {
+            dersDashboardHtml += `<div class="stat-card" style="padding: 1.25rem;"><h4 style="font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--accent);">${d}</h4><div class="val" style="font-size: 1.6rem; color: var(--text-main); margin-bottom: 0.2rem;">${stats[d].tot} <span style="font-size:0.7rem;color:var(--text-muted); font-weight: 500;">SORU</span></div><div class="stat-list" style="margin-top: 0.5rem; font-size: 0.8rem; border-top: none; padding-top:0;">Net: <span style="color:var(--text-main)">${stats[d].net.toFixed(2)}</span> D/Y: <span style="color:var(--text-muted)"><strong class="color-success">${stats[d].d}</strong> / <strong class="color-danger">${stats[d].y}</strong></span></div></div>`;
+        });
+        document.getElementById('soruDersDashboard').innerHTML = dersDashboardHtml;
+
+        if (chartNet) chartNet.destroy(); if (chartDeneme) chartDeneme.destroy();
+        Chart.defaults.color = '#a1a1aa'; Chart.defaults.font.family = 'Roboto';
+
+        const ctxNet = document.getElementById('netChart').getContext('2d');
+        chartNet = new Chart(ctxNet, { type: 'bar', data: { labels: ['TÜRKÇE', 'MAT', 'TARİH', 'COĞ', 'VAT'], datasets: [{ label: 'NET (SORU BANKASI)', data: [stats['Türkçe'].net, stats['Matematik'].net, stats['Tarih'].net, stats['Coğrafya'].net, stats['Vatandaşlık'].net], backgroundColor: '#FF6B00', borderRadius: 6 }] }, options: { maintainAspectRatio: false, responsive: true, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#2f2f36' } }, x: { grid: { display: false } } } } });
+
+        let denemeLabels = denemeList.slice().reverse().map(d => d.adi.substring(0, 10)); let denemeData = denemeList.slice().reverse().map(d => d.topNet);
+        const ctxDeneme = document.getElementById('denemeChart').getContext('2d');
+        chartDeneme = new Chart(ctxDeneme, { type: 'line', data: { labels: denemeLabels.length > 0 ? denemeLabels : ['HENÜZ DENEME YOK'], datasets: [{ label: 'TOPLAM NET', data: denemeData.length > 0 ? denemeData : [0], borderColor: '#10B981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 3, fill: true, tension: 0.4, pointBackgroundColor: '#FF6B00', pointRadius: 4 }] }, options: { maintainAspectRatio: false, responsive: true, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#2f2f36' } }, x: { grid: { display: false } } } } });
+    }
+</script>
+</body>
+</html>
