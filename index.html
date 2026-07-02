@@ -668,7 +668,7 @@
         let kayitliDurumlar = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v3")) || {};
         let haftaVerisi = kpssProgrami.filter(item => item.w === seciliHafta);
 
-        hafthaVerisi.forEach((row) => {
+        haftaVerisi.forEach((row) => {
             const tr = document.createElement("tr");
             let html = `<td style="color:var(--text-muted); font-weight:600; font-size:0.8rem;">${row.gun}</td>`;
             
