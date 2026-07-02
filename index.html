@@ -8,6 +8,7 @@
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
@@ -202,6 +203,16 @@
 </head>
 <body>
 
+<div id="loginOverlay" style="position: fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-base); z-index:999999; display:flex; justify-content:center; align-items:center;">
+    <div style="background:var(--bg-surface-grad); padding:2.5rem; border-radius:12px; border:1px solid var(--border); width:320px; text-align:center; box-shadow: 0 20px 50px rgba(0,0,0,0.8);">
+        <h2 style="color:var(--accent); margin-bottom:1.5rem; font-family: 'Poppins', sans-serif;">KOMUTA GİRİŞ</h2>
+        <input type="email" id="loginEmail" placeholder="E-posta" style="margin-bottom:10px;">
+        <input type="password" id="loginPassword" placeholder="Şifre" style="margin-bottom:20px;">
+        <button class="btn btn-primary" style="width:100%; padding: 1rem;" onclick="sistemeGirisYap()">GİRİŞ YAP</button>
+        <p id="loginErrorMsg" style="color:var(--danger); margin-top:15px; font-size:13px; display:none; font-family: 'Roboto', sans-serif;"></p>
+    </div>
+</div>
+
 <datalist id="kpssTumKonular"></datalist>
 
 <div class="motivation-overlay" id="motivationOverlay">
@@ -226,9 +237,9 @@
     </div>
 </div>
 
-<div class="container">
+<div class="container" id="mainAppContainer">
     <div class="cloud-indicator" id="cloudStatus">
-        <div class="cloud-dot" id="cloudDot"></div> <span id="cloudText">Bulut Kapalı</span>
+        <div class="cloud-dot" id="cloudDot"></div> <span id="cloudText">Bulut Bekleniyor</span>
     </div>
 
     <div class="header-title">
@@ -404,7 +415,7 @@
 
 <script>
     // ==========================================
-    // 🚀 FIREBASE (BULUT) AYARLARI BURAYA GELECEK
+    // 🚀 FIREBASE (BULUT) AYARLARI 
     // ==========================================
     const firebaseConfig = {
         apiKey: "AIzaSyByn53bm3_93862Jyj9EbtBeFwUeEG-zIs",
@@ -418,25 +429,59 @@
 
     let cloudEnabled = false;
     let kpssProgrami = [];
+    
+    // YENİ EKLENEN GİRİŞ SİSTEMİ FONKSİYONU
+    function sistemeGirisYap() {
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        const errorMsg = document.getElementById('loginErrorMsg');
+        
+        firebase.auth().signInWithEmailAndPassword(email, password)
+            .then(() => {
+                // Hata mesajını gizle, firebase otomatik olarak onAuthStateChanged tetikleyecek
+                errorMsg.style.display = 'none';
+            })
+            .catch((error) => {
+                errorMsg.textContent = "Hata: E-posta veya şifre yanlış!";
+                errorMsg.style.display = 'block';
+            });
+    }
 
     if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "BURAYA_YAPISTIR") {
         firebase.initializeApp(firebaseConfig);
         cloudEnabled = true;
-        document.getElementById("cloudDot").classList.add("online");
-        document.getElementById("cloudText").innerText = "Bulut Aktif";
-
-        firebase.database().ref('kpss_verilerim').on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                localStorage.setItem("kpssKonuDurumlari_orta_v3", JSON.stringify(data.konular || {}));
-                localStorage.setItem("kpssSoruVerileri_orta_v3", JSON.stringify(data.sorular || []));
-                localStorage.setItem("kpssDenemeVerileri_orta_v3", JSON.stringify(data.denemeler || []));
-                localStorage.setItem("kpssMufredat_orta_v3", JSON.stringify(data.mufredat || {}));
-                if(data.program) {
-                    localStorage.setItem("kpssProgram_orta_v3", JSON.stringify(data.program));
-                    kpssProgrami = data.program;
-                }
-                renderMufredat(); haftayiGoster(); updateDashboard(); renderDeneme();
+        
+        // 🛡️ OTURUM KONTROLÜ (GİRİŞ YAPILMIŞ MI DİYE DİNLER)
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                // Kullanıcı Giriş Yaptıysa:
+                document.getElementById('loginOverlay').style.display = 'none';
+                
+                // Verileri Firebase'den Çek
+                document.getElementById("cloudDot").classList.add("online");
+                document.getElementById("cloudText").innerText = "Bulut Aktif";
+                firebase.database().ref('kpss_verilerim').on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        localStorage.setItem("kpssKonuDurumlari_orta_v3", JSON.stringify(data.konular || {}));
+                        localStorage.setItem("kpssSoruVerileri_orta_v3", JSON.stringify(data.sorular || []));
+                        localStorage.setItem("kpssDenemeVerileri_orta_v3", JSON.stringify(data.denemeler || []));
+                        localStorage.setItem("kpssMufredat_orta_v3", JSON.stringify(data.mufredat || {}));
+                        if(data.program) {
+                            localStorage.setItem("kpssProgram_orta_v3", JSON.stringify(data.program));
+                            kpssProgrami = data.program;
+                        }
+                        renderMufredat(); haftayiGoster(); updateDashboard(); renderDeneme();
+                    }
+                });
+                
+                // Uygulama yüklendikten sonra motivasyon ekranını göster
+                showMotivation();
+                
+            } else {
+                // Kullanıcı Giriş Yapmadıysa (veya Çıkış Yaptıysa):
+                document.getElementById('loginOverlay').style.display = 'flex';
+                document.getElementById('motivationOverlay').classList.remove('active');
             }
         });
     }
@@ -484,8 +529,7 @@
     const aylar = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 
     document.addEventListener("DOMContentLoaded", () => {
-        showMotivation();
-        if (!localStorage.getItem("kpssProgram_orta_v3")) sistemiKalibreEt(); // İlk açılışta program yoksa oluştur
+        if (!localStorage.getItem("kpssProgram_orta_v3")) sistemiKalibreEt(); 
         else {
             kpssProgrami = JSON.parse(localStorage.getItem("kpssProgram_orta_v3"));
             renderMufredat(); haftayiGoster(); updateDashboard(); renderDeneme();
@@ -624,7 +668,7 @@
         let kayitliDurumlar = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v3")) || {};
         let haftaVerisi = kpssProgrami.filter(item => item.w === seciliHafta);
 
-        haftaVerisi.forEach((row) => {
+        hafthaVerisi.forEach((row) => {
             const tr = document.createElement("tr");
             let html = `<td style="color:var(--text-muted); font-weight:600; font-size:0.8rem;">${row.gun}</td>`;
             
