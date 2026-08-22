@@ -331,7 +331,7 @@
         </div>
     </div>
 
-    <!-- YENİ MÜFREDAT VE AYAR PANELİ -->
+    <!-- MÜFREDAT VE AYAR PANELİ -->
     <div id="mufredat-tab" class="tab-content">
         <div class="mufredat-container">
             
@@ -357,6 +357,15 @@
                 <div style="margin-top: 1.5rem; text-align: right; border-top: 1px dashed var(--border); padding-top: 1rem;">
                     <button class="btn btn-success" onclick="sistemiKalibreEt()">Özel Ayarlarla Programı Yeniden Yaz 🔄</button>
                 </div>
+            </div>
+
+            <!-- YENİ: DİNAMİK BİTİŞ TAKVİMİ KARTI -->
+            <div class="settings-panel" id="bitisTakvimiPanel" style="display:none; border-left: 4px solid var(--info); margin-bottom: 1.5rem; background: rgba(59, 130, 246, 0.05);">
+                <h3 style="color:var(--info); font-size: 1.05rem; border-bottom: none; margin-bottom: 0;">📅 Tahmini Program Bitiş Takvimi</h3>
+                <div id="bitisTakvimiIcerik" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                    <!-- JS Burayı Dolduracak -->
+                </div>
+                <div id="bitisUyari" style="margin-top: 1.25rem; font-size: 0.85rem; font-weight: 600; font-family: 'Poppins', sans-serif;"></div>
             </div>
 
             <p style="color:var(--text-muted); font-size:0.9rem; text-align:center; margin-bottom:1rem;">
@@ -491,11 +500,13 @@
                         localStorage.setItem("kpssSoruVerileri_orta_v4", JSON.stringify(data.sorular || []));
                         localStorage.setItem("kpssDenemeVerileri_orta_v4", JSON.stringify(data.denemeler || []));
                         localStorage.setItem("kpssMufredat_orta_v4", JSON.stringify(data.mufredat || {}));
+                        if(data.bitisTakvimi) localStorage.setItem("kpssBitisTarihleri_orta_v4", JSON.stringify(data.bitisTakvimi));
                         if(data.program) {
                             localStorage.setItem("kpssProgram_orta_v4", JSON.stringify(data.program));
                             kpssProgrami = data.program;
                         }
                         renderMufredat(); haftayiGoster(); updateDashboard(); renderDeneme();
+                        if (localStorage.getItem("kpssBitisTarihleri_orta_v4")) renderBitisTakvimi();
                     }
                 });
                 showMotivation();
@@ -513,9 +524,10 @@
         const denemeler = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v4")) || [];
         const mufredat = JSON.parse(localStorage.getItem("kpssMufredat_orta_v4")) || {};
         const program = JSON.parse(localStorage.getItem("kpssProgram_orta_v4")) || [];
+        const bitisTakvimi = JSON.parse(localStorage.getItem("kpssBitisTarihleri_orta_v4")) || null;
         
         firebase.database().ref('kpss_verilerim').set({
-            konular: konular, sorular: sorular, denemeler: denemeler, mufredat: mufredat, program: program, sonGuncelleme: Date.now()
+            konular: konular, sorular: sorular, denemeler: denemeler, mufredat: mufredat, program: program, bitisTakvimi: bitisTakvimi, sonGuncelleme: Date.now()
         });
     }
 
@@ -537,7 +549,6 @@
 
     function closeMotivation() { document.getElementById("motivationOverlay").classList.remove("active"); }
 
-    // DETAYLANDIRILMIŞ VE GENİŞLETİLMİŞ MÜFREDAT!
     const tumDersler = {
         'Türkçe': ["Sözcükte Anlam", "Cümlede Anlam", "Paragraf (Yapı/Ana Düşünce)", "Ses Bilgisi", "Yapı Bilgisi", "Sözcük Türleri (İsim/Sıfat/Zamir)", "Sözcük Türleri (Zarf/Edat/Bağlaç)", "Fiiller", "Cümlenin Ögeleri", "Cümle Türleri", "Yazım Kuralları", "Noktalama İşaretleri", "Anlatım Bozuklukları", "Sözel Mantık"],
         'Matematik': ["Temel Kavramlar", "Tek-Çift Sayılar", "Ardışık Sayılar", "Sayı Basamakları", "Bölme ve Bölünebilme", "EBOB-EKOK", "Rasyonel Sayılar", "Ondalık Sayılar", "Basit Eşitsizlikler", "Mutlak Değer", "Üslü Sayılar", "Köklü Sayılar", "Çarpanlara Ayırma", "Oran-Orantı", "Denklem Çözme", "Sayı ve Kesir Problemleri", "Yaş Problemleri", "İşçi Problemleri", "Hız Problemleri", "Yüzde ve Kar-Zarar Problemleri", "Karışım Problemleri", "Kümeler", "Fonksiyonlar", "Permütasyon / Kombinasyon / Olasılık", "Sayısal Mantık", "Temel Geometri"],
@@ -554,6 +565,7 @@
         else {
             kpssProgrami = JSON.parse(localStorage.getItem("kpssProgram_orta_v4"));
             renderMufredat(); haftayiGoster(); updateDashboard(); renderDeneme();
+            if (localStorage.getItem("kpssBitisTarihleri_orta_v4")) renderBitisTakvimi();
         }
         document.getElementById('inpTarih').valueAsDate = new Date(); document.getElementById('denemeTarih').valueAsDate = new Date();
         updateKonuListesi(); baslatGeriSayim();
@@ -582,7 +594,46 @@
         renderMufredat(); pushToCloud();
     }
 
-    // YENİ: DİNAMİK SAAT VE ÖNCELİK BAZLI KALİBRASYON MOTORU
+    function renderBitisTakvimi() {
+        let data = JSON.parse(localStorage.getItem("kpssBitisTarihleri_orta_v4"));
+        if(!data) return;
+        
+        let container = document.getElementById("bitisTakvimiPanel");
+        let icerik = document.getElementById("bitisTakvimiIcerik");
+        let uyari = document.getElementById("bitisUyari");
+        
+        container.style.display = "block";
+        let html = "";
+        
+        for(let d in data.tarihler) {
+            let renk = data.tarihler[d] === '-' ? 'var(--text-muted)' : 'var(--text-main)';
+            let icon = data.tarihler[d] === '-' ? '✅' : '⏳';
+            let tarihMetni = data.tarihler[d];
+            
+            if(data.yetismeyen.includes(d)) { 
+                renk = 'var(--danger)'; 
+                icon = '❌'; 
+                tarihMetni = "YETİŞMİYOR!"; 
+            } else if(data.tarihler[d] === '-') { 
+                tarihMetni = "Zaten Bitti"; 
+            }
+            
+            html += `<div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">${d}</div>
+                <div style="font-size: 0.85rem; font-weight: 600; color: ${renk}; margin-top: 4px;">${icon} ${tarihMetni}</div>
+            </div>`;
+        }
+        icerik.innerHTML = html;
+        
+        if(data.yetismeyen.length > 0) {
+            uyari.innerHTML = `<span style="color:var(--danger);">⚠️ DİKKAT: Günlük çalışma saatiniz çok düşük! ${data.yetismeyen.join(", ")} dersleri 25 Ekim 2026 sınav tarihine YETİŞMİYOR. Lütfen program ayarından saati artırın.</span>`;
+            container.style.borderLeft = "4px solid var(--danger)";
+        } else {
+            uyari.innerHTML = `<span style="color:var(--success);">🚀 Harika! Seçtiğin tempoyla tüm konular sınavdan önce tamamen bitiyor.</span>`;
+            container.style.borderLeft = "4px solid var(--success)";
+        }
+    }
+
     function sistemiKalibreEt() {
         let mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v4")) || {};
         let kalanKonular = { 'Türkçe':[], 'Matematik':[], 'Tarih':[], 'Coğrafya':[], 'Vatandaşlık':[] };
@@ -591,13 +642,11 @@
             konular.forEach(k => { if(!mufredatData[dersAd+"_"+k]) kalanKonular[dersAd].push(k); });
         }
 
-        // Ayarları Arayüzden Oku
         let gunlukSaat = parseInt(document.getElementById("ayarSaat").value) || 4;
-        let topicsPerDay = Math.max(1, Math.round(gunlukSaat / 1.5)); // 1.5 saat = 1 konu varsayımı
+        let topicsPerDay = Math.max(1, Math.round(gunlukSaat / 1.5)); 
         
         let oncelikliDersler = [];
         document.querySelectorAll("#oncelikGrup input:checked").forEach(cb => oncelikliDersler.push(cb.value));
-        
         let digerDersler = Object.keys(tumDersler).filter(d => !oncelikliDersler.includes(d));
 
         let currentDate = new Date(); 
@@ -608,10 +657,11 @@
 
         let tempProgram = [];
         let wIndex = 1;
-
         let dersObjeleri = { 'Türkçe':'tr', 'Matematik':'mat', 'Tarih':'tar', 'Coğrafya':'cog', 'Vatandaşlık':'vat' };
+        
+        // YENİ: Bitiş Tarihi Takipçisi
+        let bitisTarihleri = { 'Türkçe': '-', 'Matematik': '-', 'Tarih': '-', 'Coğrafya': '-', 'Vatandaşlık': '-' };
 
-        // Sıradaki uygun konuyu bulucu (Önce öncelikli dersler, bitince diğerleri)
         function getNextTopic() {
             for(let d of oncelikliDersler) {
                 if(kalanKonular[d].length > 0) return { ders: d, konu: kalanKonular[d].shift() };
@@ -619,32 +669,34 @@
             for(let d of digerDersler) {
                 if(kalanKonular[d].length > 0) return { ders: d, konu: kalanKonular[d].shift() };
             }
-            return null; // Her şey bitti
+            return null; 
         }
 
         while(currentDate < examDate) {
             let d = currentDate.getDay(); 
-            let dateStr = `${currentDate.getDate()} ${aylar[currentDate.getMonth()]} ${gunler[d]}`;
-            let pRow = { gun: dateStr, w: wIndex, rutin: "-", tr: "-", mat: "-", tar: "-", cog: "-", vat: "-" };
+            let dateStr = `${currentDate.getDate()} ${aylar[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+            let pRow = { gun: `${currentDate.getDate()} ${aylar[currentDate.getMonth()]} ${gunler[d]}`, w: wIndex, rutin: "-", tr: "-", mat: "-", tar: "-", cog: "-", vat: "-" };
 
-            if (d === 0 || d === 3) { // Pazar ve Çarşamba Dinlenme
+            if (d === 0 || d === 3) { 
                 pRow.tr = "DİNLENME";
-            } else if (d === 6) { // Cumartesi Deneme
+            } else if (d === 6) { 
                 pRow.tr = "Genel Deneme & Analiz";
                 pRow.rutin = "Haftalık Tekrar";
-            } else { // Çalışma Günleri
+            } else { 
                 pRow.rutin = `${gunlukSaat} Saat Odaklı Mesai`;
                 
                 let gunlukDersler = {}; 
                 let isAllDone = true;
 
-                // O günkü saate göre konuları yerleştir
                 for(let i=0; i<topicsPerDay; i++) {
                     let next = getNextTopic();
                     if(next) {
                         isAllDone = false;
                         if(!gunlukDersler[next.ders]) gunlukDersler[next.ders] = [];
                         gunlukDersler[next.ders].push(next.konu);
+                        
+                        // Konuyu takvime attığımız an, o dersin "son görünme tarihini" güncelliyoruz
+                        bitisTarihleri[next.ders] = dateStr;
                     }
                 }
 
@@ -652,7 +704,6 @@
                     pRow.tr = "Genel Soru Çözümü";
                     pRow.mat = "Genel Soru Çözümü";
                 } else {
-                    // Aynı derse ait konuları | ile ayırarak kaydet (hücrede ayrı ayrı buton olabilmesi için)
                     for (const [dersAd, konularArr] of Object.entries(gunlukDersler)) {
                         let shortCode = dersObjeleri[dersAd];
                         pRow[shortCode] = konularArr.join("|");
@@ -667,10 +718,20 @@
 
         kpssProgrami = tempProgram;
         localStorage.setItem("kpssProgram_orta_v4", JSON.stringify(kpssProgrami));
-        localStorage.removeItem("kpssKonuDurumlari_orta_v4"); // Yeni takvim = yeni butonlar
+        localStorage.removeItem("kpssKonuDurumlari_orta_v4"); 
 
-        alert(`Sistem Kalibre Edildi! Seçtiğin önceliklere ve günlük ${gunlukSaat} saatlik mesaiye göre özel plan oluşturuldu.`);
-        switchTab('konu-tab');
+        // Yetişmeyen dersleri kontrol et
+        let yetismeyenDersler = [];
+        for (let d in kalanKonular) {
+            if (kalanKonular[d].length > 0) yetismeyenDersler.push(d);
+        }
+        
+        let bitisVerisi = { tarihler: bitisTarihleri, yetismeyen: yetismeyenDersler };
+        localStorage.setItem("kpssBitisTarihleri_orta_v4", JSON.stringify(bitisVerisi));
+
+        alert(`Sistem Kalibre Edildi! Bitiş takvimi de senin hızına göre güncellendi.`);
+        switchTab('mufredat-tab');
+        renderBitisTakvimi();
         haftayiGoster(); updateDashboard(); pushToCloud();
     }
 
@@ -716,7 +777,6 @@
                         html += `<td><span style="color:var(--border-light); font-size:1.4rem;">-</span></td>`;
                     } else {
                         let gercekDersAdi = dersObjeleri[dersKodu];
-                        // Aynı günde birden fazla konu varsa onları ayırıp her birine ayrı buton basıyoruz!
                         let konularInCell = row[dersKodu].split("|");
                         let cellHtml = "";
                         
