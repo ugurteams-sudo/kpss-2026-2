@@ -10,6 +10,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- PDF ÇIKTISI İÇİN ÖZEL KÜTÜPHANE (Tasarımı korur) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         :root {
@@ -332,9 +334,24 @@
         </div>
     </div>
 
+    <!-- GÜNCEL PROGRAM (PDF ALANI İÇERİR) -->
     <div id="konu-tab" class="tab-content">
-        <div class="filter-bar"><label>Hafta Seçimi</label><select id="weekSelect" onchange="haftayiGoster()"></select></div>
-        <div class="table-responsive">
+        <div class="filter-bar" style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 1.5rem;">
+                <label>Hafta Seçimi</label>
+                <select id="weekSelect" onchange="haftayiGoster()"></select>
+            </div>
+            <!-- YENİ: PDF İndir Butonu -->
+            <button class="btn btn-outline" style="border-color: var(--info); color: var(--info);" onclick="programiPDFIndir()">
+                <span style="font-size: 1.1rem; margin-right: 5px;">📄</span> Programı PDF İndir
+            </button>
+        </div>
+        
+        <!-- YENİ: PDF'i Alınacak Tablo Alanı -->
+        <div class="table-responsive" id="pdfAlinacakAlan" style="background: var(--bg-surface-grad); border-radius: 12px;">
+            <div id="pdfHeader" style="display: none; padding: 15px; text-align: center; color: var(--accent); font-family: 'Poppins', sans-serif; font-size: 1.2rem; font-weight: bold; border-bottom: 1px solid var(--border);">
+                KPSS ORTAÖĞRETİM HAFTALIK PROGRAM
+            </div>
             <table>
                 <thead><tr><th>GÜN</th><th>RUTİN HEDEF</th><th>TÜRKÇE</th><th>MATEMATİK</th><th>TARİH</th><th>COĞRAFYA</th><th>VATANDAŞLIK</th></tr></thead>
                 <tbody id="konuTableBody"></tbody>
@@ -702,6 +719,29 @@
             }
         }
         updateDashboard(); pushToCloud();
+    }
+
+    // YENİ: PDF İNDİRME FONKSİYONU
+    function programiPDFIndir() {
+        const seciliHafta = document.getElementById("weekSelect").options[document.getElementById("weekSelect").selectedIndex].text;
+        const element = document.getElementById("pdfAlinacakAlan");
+        
+        // Geçici olarak PDF başlığını görünür yapıyoruz
+        document.getElementById("pdfHeader").innerText = "KPSS ORTAÖĞRETİM - " + seciliHafta.toUpperCase() + " PROGRAMI";
+        document.getElementById("pdfHeader").style.display = "block";
+
+        const opt = {
+            margin:       0.2,
+            filename:     `KPSS_${seciliHafta.replace(/ /g, "_")}_Programi.pdf`,
+            image:        { type: 'jpeg', quality: 1 },
+            html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#1c1c21' },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+        };
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            // PDF alındıktan sonra başlığı tekrar gizliyoruz
+            document.getElementById("pdfHeader").style.display = "none";
+        });
     }
 
     function baslatGeriSayim() {
