@@ -448,7 +448,7 @@
             });
     }
 
-    // VERSİYON GÜNCELLENDİ: v8 (Türkçe Müfredatı Öznur Saat Yıldırım'a göre dizildi)
+    // VERSİYON GÜNCELLENDİ: v9 (3 Eylül Başlangıç - Tam Oturtulmuş Takvim)
     if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "BURAYA_YAPISTIR") {
         firebase.initializeApp(firebaseConfig);
         cloudEnabled = true;
@@ -462,18 +462,18 @@
                 firebase.database().ref('kpss_verilerim').on('value', (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
-                        localStorage.setItem("kpssKonuDurumlari_orta_v8", JSON.stringify(data.konular_v8 || {}));
-                        localStorage.setItem("kpssMufredat_orta_v8", JSON.stringify(data.mufredat_v8 || {}));
+                        localStorage.setItem("kpssKonuDurumlari_orta_v9", JSON.stringify(data.konular_v9 || {}));
+                        localStorage.setItem("kpssMufredat_orta_v9", JSON.stringify(data.mufredat_v9 || {}));
                         
-                        if(data.program_v8) {
-                            localStorage.setItem("kpssProgram_orta_v8", JSON.stringify(data.program_v8));
-                            kpssProgrami = data.program_v8;
+                        if(data.program_v9) {
+                            localStorage.setItem("kpssProgram_orta_v9", JSON.stringify(data.program_v9));
+                            kpssProgrami = data.program_v9;
                         } else {
                             programiOlustur(); 
                         }
                         
-                        localStorage.setItem("kpssSoruVerileri_orta_v8", JSON.stringify(data.sorular || []));
-                        localStorage.setItem("kpssDenemeVerileri_orta_v8", JSON.stringify(data.denemeler || []));
+                        localStorage.setItem("kpssSoruVerileri_orta_v9", JSON.stringify(data.sorular || []));
+                        localStorage.setItem("kpssDenemeVerileri_orta_v9", JSON.stringify(data.denemeler || []));
                         
                         renderMufredat(); haftayiGoster(); updateDashboard(); renderDeneme();
                     }
@@ -488,18 +488,18 @@
 
     function pushToCloud() {
         if (!cloudEnabled) return;
-        const konular = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v8")) || {};
-        const sorular = JSON.parse(localStorage.getItem("kpssSoruVerileri_orta_v8")) || [];
-        const denemeler = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v8")) || [];
-        const mufredat = JSON.parse(localStorage.getItem("kpssMufredat_orta_v8")) || {};
-        const program = JSON.parse(localStorage.getItem("kpssProgram_orta_v8")) || [];
+        const konular = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v9")) || {};
+        const sorular = JSON.parse(localStorage.getItem("kpssSoruVerileri_orta_v9")) || [];
+        const denemeler = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v9")) || [];
+        const mufredat = JSON.parse(localStorage.getItem("kpssMufredat_orta_v9")) || {};
+        const program = JSON.parse(localStorage.getItem("kpssProgram_orta_v9")) || [];
         
         firebase.database().ref('kpss_verilerim').update({
-            konular_v8: konular, 
+            konular_v9: konular, 
             sorular: sorular, 
             denemeler: denemeler, 
-            mufredat_v8: mufredat, 
-            program_v8: program, 
+            mufredat_v9: mufredat, 
+            program_v9: program, 
             sonGuncelleme: Date.now()
         });
     }
@@ -509,7 +509,7 @@
     const motivasyonSozleri = [
         "Antrenmandaki her tekrar gibi, masadaki her soru da seni o atama ekranına bir adım daha yaklaştırıyor.",
         "Faz 3'e kadar dayan. Sınavı çok çalışan değil, zamanını ve stratejisini iyi yöneten kazanır.",
-        "Mazeret yok, ertelemek yok. KPSS bir sprint değil, 58 günlük bir maratondur.",
+        "Mazeret yok, ertelemek yok. KPSS bir sprint değil, 52 günlük bir maratondur.",
         "Bugün masada harcadığın her dakika, 25 Ekim sabahı sana ekstra bir net olarak dönecek.",
         "Yorgun olduğunda bile o masaya otur. Başarı tam olarak o anlarda gizlidir."
     ];
@@ -562,9 +562,9 @@
     const aylar = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 
     document.addEventListener("DOMContentLoaded", () => {
-        if (!localStorage.getItem("kpssProgram_orta_v8")) programiOlustur(); 
+        if (!localStorage.getItem("kpssProgram_orta_v9")) programiOlustur(); 
         else {
-            kpssProgrami = JSON.parse(localStorage.getItem("kpssProgram_orta_v8"));
+            kpssProgrami = JSON.parse(localStorage.getItem("kpssProgram_orta_v9"));
             renderMufredat(); haftayiGoster(); updateDashboard(); renderDeneme();
         }
         document.getElementById('inpTarih').valueAsDate = new Date(); document.getElementById('denemeTarih').valueAsDate = new Date();
@@ -572,7 +572,7 @@
     });
 
     function renderMufredat() {
-        const mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v8")) || {};
+        const mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v9")) || {};
         let html = '';
         for (const [dersAd, konular] of Object.entries(tumDersler)) {
             html += `<div class="ders-kutu"><h3>${dersAd}</h3><ul class="konu-listesi">`;
@@ -588,16 +588,16 @@
     }
 
     function toggleMufredat(id) {
-        let mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v8")) || {};
+        let mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v9")) || {};
         if(mufredatData[id]) delete mufredatData[id]; else mufredatData[id] = true;
-        localStorage.setItem("kpssMufredat_orta_v8", JSON.stringify(mufredatData));
+        localStorage.setItem("kpssMufredat_orta_v9", JSON.stringify(mufredatData));
         renderMufredat(); pushToCloud();
     }
 
     function programiOlustur() {
         let tempProgram = [];
-        let cur = new Date(2026, 7, 28);
-        const bitis = new Date(2026, 9, 24);
+        let cur = new Date(2026, 8, 3); // YENİ BAŞLANGIÇ: 3 Eylül 2026 Perşembe
+        const bitis = new Date(2026, 9, 24); // BİTİŞ: 24 Ekim 2026
         let wIndex = 1;
 
         const trQueue = [...tumDersler['Türkçe']];
@@ -615,10 +615,9 @@
             if (day === 0) {
                 row.rutin = "DİNLENME"; row.tr = "Fiziksel & Mental Dinlenme";
             } else {
-                if (cur <= new Date(2026, 8, 27)) {
-                    if (m === 7 && d === 28) { row.tr = trQueue.shift(); row.tar = tarQueue.shift(); }
-                    else if (m === 7 && d === 29) { row.mat = matQueue.shift() || "-"; row.cog = cogQueue.shift() || "-"; }
-                    else if (day === 1 || day === 3) { row.tr = trQueue.shift() || "-"; row.tar = tarQueue.shift() || "-"; }
+                // FAZ 1 (3 EYLÜL - 7 EKİM)
+                if (cur <= new Date(2026, 9, 7)) {
+                    if (day === 1 || day === 3) { row.tr = trQueue.shift() || "-"; row.tar = tarQueue.shift() || "-"; }
                     else if (day === 2 || day === 4) { row.mat = matQueue.shift() || "-"; row.cog = cogQueue.shift() || "-"; }
                     else if (day === 5 || day === 6) { 
                         row.rutin = "Haftalık Tekrar & Deneme"; 
@@ -628,7 +627,8 @@
                         row.cog = "Haftanın Coğrafya Tekrarı"; 
                     }
                 }
-                else if (cur <= new Date(2026, 9, 11)) {
+                // FAZ 2 (8 EKİM - 18 EKİM)
+                else if (cur <= new Date(2026, 9, 18)) {
                     row.rutin = "Vatandaşlık & Pratik Kampı";
                     if (day === 1 || day === 3) {
                         row.vat = vatQueue.shift() || "-";
@@ -642,11 +642,12 @@
                     }
                     else if (day === 5 || day === 6) {
                         row.rutin = "Genel Kültür Tekrarı";
-                        row.vat = "Haftalık Vatandaşlık Tekrarı";
-                        row.tar = "Tarih Branş Denemesi";
+                        row.vat = vatQueue.shift() || "Haftalık Vatandaşlık Tekrarı";
+                        row.tar = tarFaz2Queue.shift() || "Tarih Branş Denemesi";
                         row.cog = "Genel Soru Çözümü";
                     }
                 }
+                // FAZ 3 (19 EKİM - 24 EKİM)
                 else {
                     if (d === 24) {
                         row.rutin = "SON HAZIRLIK";
@@ -666,8 +667,8 @@
         }
 
         kpssProgrami = tempProgram;
-        localStorage.setItem("kpssProgram_orta_v8", JSON.stringify(kpssProgrami));
-        localStorage.removeItem("kpssKonuDurumlari_orta_v8"); 
+        localStorage.setItem("kpssProgram_orta_v9", JSON.stringify(kpssProgrami));
+        localStorage.removeItem("kpssKonuDurumlari_orta_v9"); 
         
         haftayiGoster(); updateDashboard(); pushToCloud();
     }
@@ -687,7 +688,7 @@
 
         let seciliHafta = parseInt(weekSelect.value);
         const tbody = document.getElementById("konuTableBody"); tbody.innerHTML = "";
-        let kayitliDurumlar = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v8")) || {};
+        let kayitliDurumlar = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v9")) || {};
         let haftaVerisi = kpssProgrami.filter(item => item.w === seciliHafta);
 
         haftaVerisi.forEach((row) => {
@@ -736,7 +737,7 @@
 
     function durumDegistir(btnId, dersAdi = null, konuAdi = null) {
         let btn = document.getElementById(btnId);
-        let kayitliDurumlar = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v8")) || {};
+        let kayitliDurumlar = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v9")) || {};
         let mevcutDurum = btn.getAttribute("data-durum") || "Bekliyor";
 
         if (mevcutDurum === "Bekliyor") { 
@@ -751,7 +752,7 @@
 
         let yeniDurum = btn.getAttribute("data-durum");
         kayitliDurumlar[btnId] = yeniDurum;
-        localStorage.setItem("kpssKonuDurumlari_orta_v8", JSON.stringify(kayitliDurumlar)); 
+        localStorage.setItem("kpssKonuDurumlari_orta_v9", JSON.stringify(kayitliDurumlar)); 
         
         if (dersAdi && konuAdi && 
             konuAdi !== "Genel Soru Çözümü" && 
@@ -761,7 +762,7 @@
             !konuAdi.includes("Okuması") &&
             !konuAdi.includes("Çalışmayı Sonlandır")) 
         {
-            let mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v8")) || {};
+            let mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v9")) || {};
             let mufId = dersAdi + "_" + konuAdi;
             
             if(tumDersler[dersAdi] && tumDersler[dersAdi].includes(konuAdi)) {
@@ -770,7 +771,7 @@
                 } else {
                     delete mufredatData[mufId];
                 }
-                localStorage.setItem("kpssMufredat_orta_v8", JSON.stringify(mufredatData));
+                localStorage.setItem("kpssMufredat_orta_v9", JSON.stringify(mufredatData));
                 renderMufredat(); 
             }
         }
@@ -813,19 +814,19 @@
         const dogru = parseInt(document.getElementById("inpDogru").value) || 0; const yanlis = parseInt(document.getElementById("inpYanlis").value) || 0;
         if (!tarih || toplam <= 0) return; if (toplam < (dogru + yanlis)) { alert("Hata: Doğru ve yanlışın toplamı soru sayısını geçemez!"); return; }
         let bos = toplam - (dogru + yanlis); let net = dogru - (yanlis * 0.25);
-        let soruListesi = JSON.parse(localStorage.getItem("kpssSoruVerileri_orta_v8")) || [];
+        let soruListesi = JSON.parse(localStorage.getItem("kpssSoruVerileri_orta_v9")) || [];
         soruListesi.push({ id: Date.now(), tarih, ders, konu, toplam, dogru, yanlis, bos, net });
         soruListesi.sort((a, b) => new Date(b.tarih) - new Date(a.tarih));
-        localStorage.setItem("kpssSoruVerileri_orta_v8", JSON.stringify(soruListesi));
+        localStorage.setItem("kpssSoruVerileri_orta_v9", JSON.stringify(soruListesi));
         document.getElementById("inpKonu").value = ''; document.getElementById("inpToplam").value = '';
         document.getElementById("inpDogru").value = ''; document.getElementById("inpYanlis").value = ''; 
         updateDashboard(); pushToCloud();
     }
 
     function soruSil(id) {
-        let soruListesi = JSON.parse(localStorage.getItem("kpssSoruVerileri_orta_v8")) || [];
+        let soruListesi = JSON.parse(localStorage.getItem("kpssSoruVerileri_orta_v9")) || [];
         soruListesi = soruListesi.filter(k => k.id !== id);
-        localStorage.setItem("kpssSoruVerileri_orta_v8", JSON.stringify(soruListesi)); updateDashboard(); pushToCloud();
+        localStorage.setItem("kpssSoruVerileri_orta_v9", JSON.stringify(soruListesi)); updateDashboard(); pushToCloud();
     }
 
     function calcNet(d, y) { return (d || 0) - ((y || 0) * 0.25); }
@@ -839,22 +840,22 @@
         let cogD = parseFloat(document.getElementById("dCogD").value) || 0; let cogY = parseFloat(document.getElementById("dCogY").value) || 0;
         let vatD = parseFloat(document.getElementById("dVatD").value) || 0; let vatY = parseFloat(document.getElementById("dVatY").value) || 0;
         let gyNet = calcNet(trD, trY) + calcNet(matD, matY); let gkNet = calcNet(tarD, tarY) + calcNet(cogD, cogY) + calcNet(vatD, vatY); let topNet = gyNet + gkNet;
-        let list = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v8")) || [];
+        let list = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v9")) || [];
         list.push({ id: Date.now(), tarih, adi, tr: calcNet(trD,trY), mat: calcNet(matD,matY), tar: calcNet(tarD,tarY), cog: calcNet(cogD,cogY), vat: calcNet(vatD,vatY), gyNet, gkNet, topNet });
         list.sort((a, b) => new Date(b.tarih) - new Date(a.tarih));
-        localStorage.setItem("kpssDenemeVerileri_orta_v8", JSON.stringify(list));
+        localStorage.setItem("kpssDenemeVerileri_orta_v9", JSON.stringify(list));
         ['dTrD','dTrY','dMatD','dMatY','dTarD','dTarY','dCogD','dCogY','dVatD','dVatY','denemeAdi'].forEach(id => document.getElementById(id).value = '');
         renderDeneme(); updateDashboard(); pushToCloud();
     }
 
     function silDeneme(id) {
-        let list = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v8")) || [];
-        list = list.filter(k => k.id !== id); localStorage.setItem("kpssDenemeVerileri_orta_v8", JSON.stringify(list));
+        let list = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v9")) || [];
+        list = list.filter(k => k.id !== id); localStorage.setItem("kpssDenemeVerileri_orta_v9", JSON.stringify(list));
         renderDeneme(); updateDashboard(); pushToCloud();
     }
 
     function renderDeneme() {
-        let list = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v8")) || []; let html = '';
+        let list = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v9")) || []; let html = '';
         list.forEach(d => {
             html += `<tr><td>${d.tarih.split("-").reverse().join(".")}</td><td><strong>${d.adi}</strong></td><td style="text-align: right;">${d.tr.toFixed(2)}</td><td style="text-align: right;">${d.mat.toFixed(2)}</td><td style="text-align: right;">${d.tar.toFixed(2)}</td><td style="text-align: right;">${d.cog.toFixed(2)}</td><td style="text-align: right;">${d.vat.toFixed(2)}</td><td style="text-align: right; color:var(--text-muted); font-weight:600;">${d.gyNet.toFixed(2)}</td><td style="text-align: right; color:var(--text-muted); font-weight:600;">${d.gkNet.toFixed(2)}</td><td style="text-align: right; color:var(--success); font-weight:700; font-size:1.1rem;">${d.topNet.toFixed(2)}</td><td style="text-align: center;"><button class="btn-danger" onclick="silDeneme(${d.id})">Sil</button></td></tr>`;
         });
@@ -869,7 +870,7 @@
     function closeKronos() { document.getElementById('kronosModal').classList.remove('active'); }
 
     function updateDashboard() {
-        let mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v8")) || {};
+        let mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v9")) || {};
         let totalKonu = 0; let tamamlananKonu = 0;
         for (const konular of Object.values(tumDersler)) {
             totalKonu += konular.length;
@@ -881,7 +882,7 @@
         document.getElementById("konuProgressBar").style.width = `${yuzde}%`; 
         document.getElementById("konuProgressYuzde").innerText = `%${yuzde}`;
 
-        let soruListesi = JSON.parse(localStorage.getItem("kpssSoruVerileri_orta_v8")) || [];
+        let soruListesi = JSON.parse(localStorage.getItem("kpssSoruVerileri_orta_v9")) || [];
         let stats = { 'Türkçe': { tot: 0, d: 0, y: 0, b:0, net: 0 }, 'Matematik': { tot: 0, d: 0, y: 0, b:0, net: 0 }, 'Tarih': { tot: 0, d: 0, y: 0, b:0, net: 0 }, 'Coğrafya': { tot: 0, d: 0, y: 0, b:0, net: 0 }, 'Vatandaşlık': { tot: 0, d: 0, y: 0, b:0, net: 0 }, 'GENEL': { tot: 0, d: 0, y: 0, b:0, net: 0 } };
         let soruListesiHtml = '';
 
@@ -894,7 +895,7 @@
         });
         document.getElementById("soruListesi").innerHTML = soruListesiHtml;
 
-        let denemeList = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v8")) || [];
+        let denemeList = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v9")) || [];
         let dOrtGY = 0, dOrtGK = 0, dOrtTotal = 0;
         if(denemeList.length > 0) {
             dOrtGY = denemeList.reduce((sum, d) => sum + d.gyNet, 0) / denemeList.length; dOrtGK = denemeList.reduce((sum, d) => sum + d.gkNet, 0) / denemeList.length; dOrtTotal = denemeList.reduce((sum, d) => sum + d.topNet, 0) / denemeList.length;
@@ -936,7 +937,7 @@
         printContainer.style.fontFamily = 'Arial, sans-serif';
 
         let html = `
-            <h2 style="text-align:center; color:#111; margin-bottom: 20px; text-transform: uppercase;">KPSS 2026 Ortaöğretim - Tam Çalışma Programı (28 Ağu - 24 Eki)</h2>
+            <h2 style="text-align:center; color:#111; margin-bottom: 20px; text-transform: uppercase;">KPSS 2026 Ortaöğretim - Tam Çalışma Programı (3 Eyl - 24 Eki)</h2>
             <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
                 <thead>
                     <tr style="background-color: #e5e7eb; border: 1px solid #d1d5db; color: #111;">
