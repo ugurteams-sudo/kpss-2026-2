@@ -10,7 +10,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <!-- PDF KÜTÜPHANESİ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
@@ -231,9 +230,6 @@
             <div class="kronos-title">KRONOS<br><span style="font-size:0.85rem; color:var(--text-muted); font-weight:400; font-family:'Roboto', sans-serif;">Yapay Zeka Strateji Koçu</span></div>
         </div>
         <div id="kronosReportContent"></div>
-        <div style="text-align:center; margin-top:1.5rem; font-size:0.85rem; color:var(--text-muted); font-style:italic;">
-            "Sınavı çok çalışan değil, zamanı ve kör noktalarını iyi yöneten kazanır." - Kronos
-        </div>
     </div>
 </div>
 
@@ -290,13 +286,16 @@
 
         <div class="middle-grid">
             <div class="analysis-card" style="border-top: 3px solid var(--danger);">
-                <h3 class="color-danger">Eksik Görevler</h3><ul class="task-list" id="aiCalendarTasks"></ul>
+                <h3 class="color-danger">Eksik Görevler</h3>
+                <ul class="task-list" id="aiCalendarTasks"></ul>
             </div>
             <div class="analysis-card" style="border-top: 3px solid var(--warning);">
-                <h3 class="color-warning">Net Düşürenler</h3><ul class="task-list" id="aiWeakTasks"></ul>
+                <h3 class="color-warning">Net Düşürenler</h3>
+                <ul class="task-list" id="aiWeakTasks"></ul>
             </div>
             <div class="analysis-card" style="border-top: 3px solid var(--success);">
-                <h3 class="color-success">Güçlü Konular</h3><ul class="task-list" id="aiStrongTasks"></ul>
+                <h3 class="color-success">Güçlü Dersler</h3>
+                <ul class="task-list" id="aiStrongTasks"></ul>
             </div>
             <div class="stat-card c-soru">
                 <h4>Çözülen Soru</h4><div class="val" id="dashTotalSoru">0</div>
@@ -448,7 +447,6 @@
             });
     }
 
-    // VERSİYON GÜNCELLENDİ: v9 (3 Eylül Başlangıç - Tam Oturtulmuş Takvim)
     if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "BURAYA_YAPISTIR") {
         firebase.initializeApp(firebaseConfig);
         cloudEnabled = true;
@@ -718,7 +716,7 @@
                         let gercekDersAdi = dersObjeleri[dersKodu];
                         let singleKonu = row[dersKodu];
                         let safeKonu = singleKonu.replace(/'/g, "\\'"); 
-                        let benzersizId = `btn_${row.gun.replace(/\s+/g, '')}_${dersKodu}_${row.w}`;
+                        let benzersizId = `btn_${row.gun.replace(/\s+/g, '')}_${dersKodu}_${row.w}_0`;
                         let durum = kayitliDurumlar[benzersizId] || "Bekliyor";
                         let btnClass = "status-btn"; if (durum === "Tamamlandı") btnClass += " yesil"; if (durum === "Yapılmadı") btnClass += " kirmizi";
                         
@@ -754,6 +752,7 @@
         kayitliDurumlar[btnId] = yeniDurum;
         localStorage.setItem("kpssKonuDurumlari_orta_v9", JSON.stringify(kayitliDurumlar)); 
         
+        // Müfredatta üstünü çizme kontrolü
         if (dersAdi && konuAdi && 
             konuAdi !== "Genel Soru Çözümü" && 
             !konuAdi.includes("Branş Denemesi") && 
@@ -862,12 +861,72 @@
         document.getElementById("denemeListesi").innerHTML = html;
     }
 
+    // 🔥 EKSİK GÖREVLER VE YAPAY ZEKA RAPOR OLUŞTURUCU 🔥
     function generateKronosReport() {
-        document.getElementById('kronosReportContent').innerHTML = "<div style='color:var(--text-muted); text-align:center;'>Sistemi verilerle beslemeye devam et. Rapor yakında üretilecek.</div>";
+        let kayitliDurumlar = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v9")) || {};
+        let eksikGorevler = [];
+        
+        if(kpssProgrami && kpssProgrami.length > 0) {
+            kpssProgrami.forEach(row => {
+                let dersObjeleri = { 'tr':'Türkçe', 'mat':'Matematik', 'tar':'Tarih', 'cog':'Coğrafya', 'vat':'Vatandaşlık' };
+                Object.keys(dersObjeleri).forEach(dersKodu => {
+                    if (row[dersKodu] !== "-" && row[dersKodu] !== "DİNLENME" && row[dersKodu] !== "Fiziksel & Mental Dinlenme") {
+                        let singleKonu = row[dersKodu];
+                        let benzersizId = `btn_${row.gun.replace(/\s+/g, '')}_${dersKodu}_${row.w}_0`;
+                        if(kayitliDurumlar[benzersizId] === "Yapılmadı") {
+                            eksikGorevler.push({ gun: row.gun, ders: dersObjeleri[dersKodu], konu: singleKonu });
+                        }
+                    }
+                });
+                let ozelId = `btn_${row.gun.replace(/\s+/g, '')}_Ozel_${row.w}`;
+                if(kayitliDurumlar[ozelId] === "Yapılmadı") {
+                    eksikGorevler.push({ gun: row.gun, ders: "Deneme/Tekrar", konu: row.tr });
+                }
+            });
+        }
+
+        let reportHtml = "";
+        
+        // 1. Eksik Görevler Modülü
+        if(eksikGorevler.length > 0) {
+            reportHtml += `<div class="kronos-report-item" style="border-left: 4px solid var(--danger);">
+                <h4 style="color: var(--danger);">⚠️ ACİL: Biriken Eksik Görevler</h4>
+                <ul style="margin-left: 1rem; font-size: 0.85rem; color: var(--text-main); margin-top:0.5rem; line-height:1.6; padding-left: 1rem;">`;
+            eksikGorevler.forEach(g => {
+                reportHtml += `<li style="margin-bottom: 4px;"><strong>${g.gun}</strong><br><span style="color:var(--text-muted);">${g.ders}:</span> ${g.konu}</li>`;
+            });
+            reportHtml += `</ul></div>`;
+        } else {
+            reportHtml += `<div class="kronos-report-item" style="border-left: 4px solid var(--success);">
+                <h4 style="color: var(--success);">✅ MÜKEMMEL DİSİPLİN</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">"Yapılmadı" olarak işaretlenmiş hiçbir görevin yok. Plana kusursuz sadık kalıyorsun, aynen böyle devam!</p>
+            </div>`;
+        }
+
+        // 2. Deneme Analiz Modülü
+        let denemeList = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v9")) || [];
+        if(denemeList.length >= 2) {
+            let son = denemeList[0].topNet;
+            let onceki = denemeList[1].topNet;
+            let fark = (son - onceki).toFixed(2);
+            let icon = fark > 0 ? "📈" : "📉";
+            let color = fark > 0 ? "var(--success)" : "var(--warning)";
+            let mesaj = fark > 0 ? "Harika bir ivme yakaladın." : "Netlerinde düşüş var, bu haftaki deneme analizlerine ağırlık ver.";
+            
+            reportHtml += `<div class="kronos-report-item" style="border-left: 4px solid ${color};">
+                <h4 style="color: ${color};">${icon} Deneme Trend Analizi</h4>
+                <p style="font-size: 0.85rem; color: var(--text-main); margin-top: 0.2rem;">Son denemende bir öncekine göre <strong>${Math.abs(fark)} net</strong> ${fark > 0 ? 'artış' : 'düşüş'} yaşadın. ${mesaj}</p>
+            </div>`;
+        } else {
+            reportHtml += `<div class="kronos-report-item" style="border-left: 4px solid var(--info);">
+                <h4 style="color: var(--info);">📊 Deneme Verisi Yetersiz</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">Trend analizi yapabilmem için sisteme en az 2 deneme sonucu girmelisin.</p>
+            </div>`;
+        }
+
+        document.getElementById('kronosReportContent').innerHTML = reportHtml;
         document.getElementById('kronosModal').classList.add('active');
     }
-
-    function closeKronos() { document.getElementById('kronosModal').classList.remove('active'); }
 
     function updateDashboard() {
         let mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v9")) || {};
@@ -882,6 +941,42 @@
         document.getElementById("konuProgressBar").style.width = `${yuzde}%`; 
         document.getElementById("konuProgressYuzde").innerText = `%${yuzde}`;
 
+        // 🔥 YENİ: EKSİK GÖREVLERİ DASHBOARD'A YAZDIRMA 🔥
+        let kayitliDurumlar = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v9")) || {};
+        let eksikGorevler = [];
+        
+        if(kpssProgrami && kpssProgrami.length > 0) {
+            kpssProgrami.forEach(row => {
+                let dersObjeleri = { 'tr':'Türkçe', 'mat':'Matematik', 'tar':'Tarih', 'cog':'Coğrafya', 'vat':'Vatandaşlık' };
+                Object.keys(dersObjeleri).forEach(dersKodu => {
+                    if (row[dersKodu] !== "-" && row[dersKodu] !== "DİNLENME" && row[dersKodu] !== "Fiziksel & Mental Dinlenme") {
+                        let singleKonu = row[dersKodu];
+                        let benzersizId = `btn_${row.gun.replace(/\s+/g, '')}_${dersKodu}_${row.w}_0`;
+                        if(kayitliDurumlar[benzersizId] === "Yapılmadı") {
+                            eksikGorevler.push({ ders: dersObjeleri[dersKodu], konu: singleKonu });
+                        }
+                    }
+                });
+                let ozelId = `btn_${row.gun.replace(/\s+/g, '')}_Ozel_${row.w}`;
+                if(kayitliDurumlar[ozelId] === "Yapılmadı") {
+                    eksikGorevler.push({ ders: "Özel", konu: row.tr });
+                }
+            });
+        }
+
+        let eksikHtml = "";
+        if(eksikGorevler.length === 0) {
+            eksikHtml = `<li class="task-item"><span style="color:var(--success);">Eksik görev yok! 🎯</span></li>`;
+        } else {
+            eksikGorevler.slice(0, 4).forEach(g => {
+                eksikHtml += `<li class="task-item"><span title="${g.konu}">${g.konu}</span><strong style="color:var(--danger)">Yapılmadı</strong></li>`;
+            });
+            if(eksikGorevler.length > 4) {
+                eksikHtml += `<li class="task-item"><span style="color:var(--text-muted); font-size:0.75rem;">+ ${eksikGorevler.length - 4} görev daha...</span></li>`;
+            }
+        }
+        document.getElementById("aiCalendarTasks").innerHTML = eksikHtml;
+
         let soruListesi = JSON.parse(localStorage.getItem("kpssSoruVerileri_orta_v9")) || [];
         let stats = { 'Türkçe': { tot: 0, d: 0, y: 0, b:0, net: 0 }, 'Matematik': { tot: 0, d: 0, y: 0, b:0, net: 0 }, 'Tarih': { tot: 0, d: 0, y: 0, b:0, net: 0 }, 'Coğrafya': { tot: 0, d: 0, y: 0, b:0, net: 0 }, 'Vatandaşlık': { tot: 0, d: 0, y: 0, b:0, net: 0 }, 'GENEL': { tot: 0, d: 0, y: 0, b:0, net: 0 } };
         let soruListesiHtml = '';
@@ -894,6 +989,26 @@
             soruListesiHtml += `<tr><td>${kayit.tarih.split("-").reverse().join(".")}</td><td><strong>${kayit.ders}</strong></td><td><span style="color:var(--text-muted);">${kayit.konu}</span></td><td style="text-align: right; font-family:'Roboto', sans-serif;">${kayit.toplam}</td><td style="text-align: right; color:var(--success); font-family:'Roboto', sans-serif;">${kayit.dogru}</td><td style="text-align: right; color:var(--danger); font-family:'Roboto', sans-serif;">${kayit.yanlis}</td><td style="text-align: right; color:var(--text-muted); font-family:'Roboto', sans-serif;">${kayit.bos}</td><td style="text-align: right; ${netRenk} font-family:'Roboto', sans-serif;">${kayit.net.toFixed(2)}</td><td style="text-align: center;"><button class="btn-danger" onclick="soruSil(${kayit.id})">Sil</button></td></tr>`;
         });
         document.getElementById("soruListesi").innerHTML = soruListesiHtml;
+
+        // 🔥 YENİ: GÜÇLÜ VE ZAYIF DERSLERİ İSTATİSTİKTEN HESAPLA 🔥
+        let dersNetOranlari = [];
+        ['Türkçe', 'Matematik', 'Tarih', 'Coğrafya', 'Vatandaşlık'].forEach(d => {
+            if(stats[d].tot > 0) {
+                dersNetOranlari.push({ ders: d, oran: stats[d].net / stats[d].tot });
+            }
+        });
+        dersNetOranlari.sort((a,b) => a.oran - b.oran);
+
+        if(dersNetOranlari.length > 0) {
+            let enZayif = dersNetOranlari[0];
+            document.getElementById("aiWeakTasks").innerHTML = `<li class="task-item"><span>${enZayif.ders}</span><strong style="color:var(--warning)">%${(enZayif.oran*100).toFixed(0)} Başarı</strong></li>`;
+            
+            let enGuclu = dersNetOranlari[dersNetOranlari.length-1];
+            document.getElementById("aiStrongTasks").innerHTML = `<li class="task-item"><span>${enGuclu.ders}</span><strong style="color:var(--success)">%${(enGuclu.oran*100).toFixed(0)} Başarı</strong></li>`;
+        } else {
+            document.getElementById("aiWeakTasks").innerHTML = `<li class="task-item"><span style="color:var(--text-muted);">Soru verisi girilmedi</span></li>`;
+            document.getElementById("aiStrongTasks").innerHTML = `<li class="task-item"><span style="color:var(--text-muted);">Soru verisi girilmedi</span></li>`;
+        }
 
         let denemeList = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v9")) || [];
         let dOrtGY = 0, dOrtGK = 0, dOrtTotal = 0;
