@@ -216,9 +216,9 @@
 
 <div class="motivation-overlay" id="motivationOverlay">
     <div class="motivation-box">
-        <h2 style="color: var(--accent); margin-bottom: 1.5rem; text-shadow: 0 0 25px var(--accent-glow); letter-spacing: 1px;">KRONOS: ÖNCELİK & ELEME STRATEJİSİ</h2>
+        <h2 style="color: var(--accent); margin-bottom: 1.5rem; text-shadow: 0 0 25px var(--accent-glow); letter-spacing: 1px;">KRONOS: SON 23 GÜN ACİL KURTARMA</h2>
         <p id="dailyMotivationText" class="motivation-text"></p>
-        <button class="btn btn-primary" style="font-size: 1rem; border-radius: 50px; text-transform: uppercase;" onclick="closeMotivation()">Zaman Tuzaklarını Atla, Masaya Geç 🚀</button>
+        <button class="btn btn-primary" style="font-size: 1rem; border-radius: 50px; text-transform: uppercase;" onclick="closeMotivation()">Geçmişi Unut, Masaya Geç 🚀</button>
     </div>
 </div>
 
@@ -239,13 +239,13 @@
     </div>
 
     <div class="header-title">
-        KPSS 2026 ORTAÖĞRETİM <span>/</span> NOKTA ATIŞI KURTARMA PLANI
+        KPSS 2026 ORTAÖĞRETİM <span>/</span> 23 GÜNLÜK ACİL PLANI
     </div>
     
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('ozet-tab')">Genel Özet</button>
         <button class="tab-btn" onclick="switchTab('mufredat-tab')">Müfredat & Atlanacaklar</button>
-        <button class="tab-btn" onclick="switchTab('konu-tab')">Gün Gün Eylem Planı</button>
+        <button class="tab-btn" onclick="switchTab('konu-tab')">Gün Gün Eylem Planı (2 Eki - 24 Eki)</button>
         <button class="tab-btn" onclick="switchTab('soru-tab')">Soru Çözümü</button>
         <button class="tab-btn" onclick="switchTab('deneme-tab')">Deneme Sınavları</button>
     </div>
@@ -327,7 +327,7 @@
     <div id="mufredat-tab" class="tab-content">
         <div class="mufredat-container">
             <p style="color:var(--text-muted); font-size:0.9rem; text-align:center; margin-bottom:1rem;">
-                Yeşiller bitirdiklerin, <span style="color:var(--danger); font-weight:600;">🚫 [ATLA]</span> yazanlar ise son 1 ayda vakit kaybetmemen için elenen düşük getirili konulardır.
+                Yeşiller bitirdiklerin, <span style="color:var(--danger); font-weight:600;">🚫 [ATLA]</span> yazanlar ise son 23 günde vakit kaybetmemen için elenen düşük getirili konulardır.
             </p>
             <div class="mufredat-grid" id="mufredatGridPaneli"></div>
         </div>
@@ -336,11 +336,11 @@
     <div id="konu-tab" class="tab-content">
         <div class="filter-bar" style="justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 1.5rem;">
-                <label>Hafta Seçimi (Önem Sırasına Göre)</label>
+                <label>Hafta Seçimi</label>
                 <select id="weekSelect" onchange="haftayiGoster()"></select>
             </div>
             <button class="btn btn-outline" style="border-color: var(--info); color: var(--info);" onclick="programiPDFYap(event)">
-                📄 Nokta Atışı Planı PDF İndir
+                📄 23 Günlük Planı PDF İndir
             </button>
         </div>
         <div class="table-responsive">
@@ -432,7 +432,7 @@
     let cloudEnabled = false;
     let kpssProgrami = [];
 
-    // KİTAP SAYFALARINA GÖRE ÖNCELİKLENDİRİLMİŞ & ELENMİŞ MÜFREDAT (V13)
+    // KİTAP SAYFALARINA GÖRE ÖNCELİKLENDİRİLMİŞ & ELENMİŞ MÜFREDAT (V14)
     const tumDersler = {
         'Türkçe': [
             "6-7. Ünite: Sözcüğün ve Cümlenin Anlamı",
@@ -500,7 +500,7 @@
         ]
     };
 
-    // ŞU ANA KADAR BİTİRDİĞİN 12 KONU (Türk İslam Tarihi Çıkarıldı, Programa Eklendi)
+    // ŞU ANA KADAR BİTİRDİĞİN KONULAR (OTOMATİK YEŞİL BAŞLAR)
     const oncedenBitenler = {
         "Türkçe_6-7. Ünite: Sözcüğün ve Cümlenin Anlamı": true,
         "Türkçe_8-9. Ünite: Anlatım ve Paragrafın Yapısı": true,
@@ -529,7 +529,7 @@
             });
     }
 
-    // VERSİYON GÜNCELLENDİ: v13 (Türk İslam Tarihi 28 Eylül Pazartesi Başlangıcına Eklendi)
+    // VERSİYON GÜNCELLENDİ: v14 (2 Ekim Başlangıçlı Acil Durum Planı)
     if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "BURAYA_YAPISTIR") {
         firebase.initializeApp(firebaseConfig);
         cloudEnabled = true;
@@ -543,23 +543,23 @@
                 firebase.database().ref('kpss_verilerim').on('value', (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
-                        localStorage.setItem("kpssKonuDurumlari_orta_v13", JSON.stringify(data.konular_v13 || {}));
+                        localStorage.setItem("kpssKonuDurumlari_orta_v14", JSON.stringify(data.konular_v14 || {}));
                         
-                        if (data.mufredat_v13) {
-                            localStorage.setItem("kpssMufredat_orta_v13", JSON.stringify(data.mufredat_v13));
+                        if (data.mufredat_v14) {
+                            localStorage.setItem("kpssMufredat_orta_v14", JSON.stringify(data.mufredat_v14));
                         } else {
-                            localStorage.setItem("kpssMufredat_orta_v13", JSON.stringify(oncedenBitenler));
+                            localStorage.setItem("kpssMufredat_orta_v14", JSON.stringify(oncedenBitenler));
                         }
                         
-                        if(data.program_v13) {
-                            localStorage.setItem("kpssProgram_orta_v13", JSON.stringify(data.program_v13));
-                            kpssProgrami = data.program_v13;
+                        if(data.program_v14) {
+                            localStorage.setItem("kpssProgram_orta_v14", JSON.stringify(data.program_v14));
+                            kpssProgrami = data.program_v14;
                         } else {
                             programiOlustur(); 
                         }
                         
-                        localStorage.setItem("kpssSoruVerileri_orta_v13", JSON.stringify(data.sorular || []));
-                        localStorage.setItem("kpssDenemeVerileri_orta_v13", JSON.stringify(data.denemeler || []));
+                        localStorage.setItem("kpssSoruVerileri_orta_v14", JSON.stringify(data.sorular || []));
+                        localStorage.setItem("kpssDenemeVerileri_orta_v14", JSON.stringify(data.denemeler || []));
                         
                         renderMufredat(); haftayiGoster(); updateDashboard(); renderDeneme();
                     }
@@ -574,18 +574,18 @@
 
     function pushToCloud() {
         if (!cloudEnabled) return;
-        const konular = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v13")) || {};
-        const sorular = JSON.parse(localStorage.getItem("kpssSoruVerileri_orta_v13")) || [];
-        const denemeler = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v13")) || [];
-        const mufredat = JSON.parse(localStorage.getItem("kpssMufredat_orta_v13")) || oncedenBitenler;
-        const program = JSON.parse(localStorage.getItem("kpssProgram_orta_v13")) || [];
+        const konular = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v14")) || {};
+        const sorular = JSON.parse(localStorage.getItem("kpssSoruVerileri_orta_v14")) || [];
+        const denemeler = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v14")) || [];
+        const mufredat = JSON.parse(localStorage.getItem("kpssMufredat_orta_v14")) || oncedenBitenler;
+        const program = JSON.parse(localStorage.getItem("kpssProgram_orta_v14")) || [];
         
         firebase.database().ref('kpss_verilerim').update({
-            konular_v13: konular, 
+            konular_v14: konular, 
             sorular: sorular, 
             denemeler: denemeler, 
-            mufredat_v13: mufredat, 
-            program_v13: program, 
+            mufredat_v14: mufredat, 
+            program_v14: program, 
             sonGuncelleme: Date.now()
         });
     }
@@ -593,10 +593,10 @@
     let chartNet = null;
     let chartDeneme = null;
     const motivasyonSozleri = [
+        "Geçmişi bırak. Kalan 23 gün, %50'sini zaten bitirdiğin bir sınav için fazlasıyla yeterli.",
         "Sınavı her konuya çalışan değil, son 1 ayda hangi konuyu atlayacağını bilen kazanır!",
-        "Türk-İslam Tarihi, Osmanlı Kültür ve Medeniyet ile İnkılap Tarihi sana Tarih netlerinin %80'ini doğrudan getirecek.",
-        "Matematikte ilk 12 soruluk cebir kısmını zaten bitirdin! Şimdi sadece Sayı, Kesir, Yaş ve Yüzde problemleriyle 18 nete çıkma vakti.",
-        "Coğrafyada karstik şekilleri bırak; Tarım, Maden, Sanayi ve Nüfus çalışarak 18 sorunun 14'ünü cebine koy."
+        "Düştüğün yerden kalkmak en büyük erdemdir. 25 Ekim sabahı o salona tam hakimiyetle gireceksin.",
+        "Bugün masada çözeceğin her problem ve paragraf, 25 Ekim sabahı sana doğrudan puan olarak dönecek."
     ];
 
     function showMotivation() {
@@ -608,12 +608,12 @@
     function closeMotivation() { document.getElementById("motivationOverlay").classList.remove("active"); }
 
     document.addEventListener("DOMContentLoaded", () => {
-        if (!localStorage.getItem("kpssMufredat_orta_v13")) {
-            localStorage.setItem("kpssMufredat_orta_v13", JSON.stringify(oncedenBitenler));
+        if (!localStorage.getItem("kpssMufredat_orta_v14")) {
+            localStorage.setItem("kpssMufredat_orta_v14", JSON.stringify(oncedenBitenler));
         }
-        if (!localStorage.getItem("kpssProgram_orta_v13")) programiOlustur(); 
+        if (!localStorage.getItem("kpssProgram_orta_v14")) programiOlustur(); 
         else {
-            kpssProgrami = JSON.parse(localStorage.getItem("kpssProgram_orta_v13"));
+            kpssProgrami = JSON.parse(localStorage.getItem("kpssProgram_orta_v14"));
             renderMufredat(); haftayiGoster(); updateDashboard(); renderDeneme();
         }
         document.getElementById('inpTarih').valueAsDate = new Date(); document.getElementById('denemeTarih').valueAsDate = new Date();
@@ -621,7 +621,7 @@
     });
 
     function renderMufredat() {
-        const mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v13")) || oncedenBitenler;
+        const mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v14")) || oncedenBitenler;
         let html = '';
         for (const [dersAd, konular] of Object.entries(tumDersler)) {
             html += `<div class="ders-kutu"><h3>${dersAd}</h3><ul class="konu-listesi">`;
@@ -641,152 +641,49 @@
     }
 
     function toggleMufredat(id) {
-        let mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v13")) || {};
+        let mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v14")) || {};
         if(mufredatData[id]) delete mufredatData[id]; else mufredatData[id] = true;
-        localStorage.setItem("kpssMufredat_orta_v13", JSON.stringify(mufredatData));
+        localStorage.setItem("kpssMufredat_orta_v14", JSON.stringify(mufredatData));
         renderMufredat(); pushToCloud();
     }
 
-    // GÜN GÜN ÖNEM SIRASINA GÖRE NOKTA ATIŞI PROGRAM (V13: TÜRK İSLAM TARİHİ EKLENDİ)
+    // 🔥 23 GÜNLÜK ACİL KURTARMA PROGRAMI (2 EKİM - 24 EKİM) 🔥
     function programiOlustur() {
         kpssProgrami = [
-            // 1. HAFTA: EN ÇOK SORU GETİREN BANKO KONULAR (ÖNCELİK 1)
-            {
-                gun: "28 Eylül Pzt", w: 1, rutin: "🔥 ÖNCELİK 1: Kaldığın Yerden Devam (25 Paragraf)",
-                tr: "3. Ünite: Yazım Kuralları (s.63-67)", mat: "-",
-                tar: "II. Ünite: Türk İslam Tarihi (s.19-46)||🎯 Karahanlı, Gazneli, Büyük Selçuklu ve Kültür-Medeniyet", cog: "-", vat: "-"
-            },
-            {
-                gun: "29 Eylül Salı", w: 1, rutin: "🔥 ÖNCELİK 1: Problemlere Giriş",
-                tr: "-", mat: "Sayı Problemleri (s.143)",
-                tar: "-", cog: "Yeryüzü Şekilleri: Dağlar, Ovalar ve Platolar (s.25-33)||⚠️ s.36-52 Detaylarını Şimdilik ATLA!", vat: "-"
-            },
-            {
-                gun: "30 Eylül Çar", w: 1, rutin: "🔥 ÖNCELİK 1: Noktalama & Osmanlı Kültür",
-                tr: "4. Ünite: Noktalama İşaretleri (s.71-75)", mat: "-",
-                tar: "V. Ünite: Osmanlıda Kültür ve Medeniyet (s.63)||⚠️ s.47-60 Kuruluş ve Yükselme Savaşlarını ATLA!", cog: "-", vat: "-"
-            },
-            {
-                gun: "1 Ekim Per", w: 1, rutin: "🔥 ÖNCELİK 1: Kesir & İklim",
-                tr: "-", mat: "Kesir Problemleri (s.151)",
-                tar: "-", cog: "Türkiye'de İklim ve Bitki Örtüsü (s.63-83)", vat: "-"
-            },
-            {
-                gun: "2 Ekim Cuma", w: 1, rutin: "🔥 ÖNCELİK 1: İnkılap Başlangıcı & Nüfus",
-                tr: "-", mat: "-",
-                tar: "X. Ünite: Millî Mücadele Hazırlık Dönemi (s.133)||⚠️ s.81-91 Duraklama/Gerileme Siyasi Tarihini ATLA!", cog: "Türkiye'de Nüfus, Göç ve Yerleşme (s.85-96)", vat: "-"
-            },
-            {
-                gun: "3 Ekim Cmt", w: 1, rutin: "🔥 ÖNCELİK 1: Sözel Mantık & Yaş",
-                tr: "Sözel Mantık Tablo Kurma Taktikleri", mat: "Yaş Problemleri (s.159)||⚠️ s.167-175 Hareket/İşçi Şimdilik ATLA!",
-                tar: "-", cog: "-", vat: "-"
-            },
-            {
-                gun: "4 Ekim Pazar", w: 1, rutin: "DİNLENME",
-                tr: "Fiziksel & Mental Dinlenme", mat: "-", tar: "-", cog: "-", vat: "-"
-            },
+            // --- 1. HAFTA (2 EKİM - 4 EKİM) : KISA HAFTA SONU BAŞLANGICI ---
+            { gun: "2 Ekim Cuma", w: 1, rutin: "🔥 SON 23 GÜN - BAŞLA! (25 Paragraf)", tr: "3. Ünite: Yazım Kuralları (s.63-67)", mat: "-", tar: "II. Ünite: Türk İslam Tarihi (s.19-46)", cog: "-", vat: "-" },
+            { gun: "3 Ekim Cmt", w: 1, rutin: "🔥 SON 23 GÜN (15 Problem)", tr: "-", mat: "Sayı Problemleri (s.143)", tar: "-", cog: "Yeryüzü Şekilleri: Dağlar, Ovalar ve Platolar (s.25-33)", vat: "-" },
+            { gun: "4 Ekim Pazar", w: 1, rutin: "DİNLENME", tr: "Fiziksel & Mental Dinlenme", mat: "-", tar: "-", cog: "-", vat: "-" },
 
-            // 2. HAFTA: YÜKSEK GETİRİLİ KONULAR (ÖNCELİK 2)
-            {
-                gun: "5 Ekim Pzt", w: 2, rutin: "⚡ ÖNCELİK 2: Cepheler & Ögeler",
-                tr: "Cümlenin Ögeleri (s.37)||⚠️ s.41 Cümle Çeşitleri ve s.79 Anlatım Bozukluğu ATLA!", mat: "-",
-                tar: "X. Ünite: Millî Mücadele Cepheler ve Lozan (s.145)", cog: "-", vat: "-"
-            },
-            {
-                gun: "6 Ekim Salı", w: 2, rutin: "⚡ ÖNCELİK 2: Ekonomik Coğrafya & Yüzde",
-                tr: "-", mat: "Yüzde - Kâr - Zarar Problemleri (s.183)||⚠️ Faiz ve s.191 Karışım Problemlerini ATLA!",
-                tar: "-", cog: "Türkiye'de Tarım ve Hayvancılık (s.105-117)", vat: "-"
-            },
-            {
-                gun: "7 Ekim Çar", w: 2, rutin: "⚡ ÖNCELİK 2: Sözcük Türleri & İnkılaplar",
-                tr: "Sözcük Türleri: İsim, Sıfat, Zamir (s.13-22)", mat: "-",
-                tar: "XI. Ünite: Atatürkçülük ve Türk İnkılabı 1 (s.162)", cog: "-", vat: "-"
-            },
-            {
-                gun: "8 Ekim Per", w: 2, rutin: "⚡ ÖNCELİK 2: Grafik & Maden-Sanayi",
-                tr: "-", mat: "Grafik Problemleri (s.199) & Sayısal Mantık (s.239)||⚠️ s.215-235 Modüler/Olasılık/Fonksiyon ATLA!",
-                tar: "-", cog: "Türkiye'de Madencilik ve Sanayi (s.123-137)", vat: "-"
-            },
-            {
-                gun: "9 Ekim Cuma", w: 2, rutin: "⚡ ÖNCELİK 2: Ulaşım-Turizm & Fiilimsi",
-                tr: "Sözcük Türleri: Zarf, Edat, Bağlaç ve Fiilimsi (s.22-34)", mat: "-",
-                tar: "-", cog: "Türkiye'de Ticaret, Ulaşım ve Turizm (s.144-154)||⚠️ s.163-207 Bölge/İl İl Türkiye ATLA!", vat: "-"
-            },
-            {
-                gun: "10 Ekim Cmt", w: 2, rutin: "⚡ ÖNCELİK 2: Üçgenler & Dış Politika",
-                tr: "-", mat: "Geometri: Üçgenler (s.247)||⚠️ s.277-301 Çember/Katı Cisim/Analitik ATLA!",
-                tar: "XI-XII. Ünite: İnkılaplar 2 & Atatürk Dönemi Dış Politika (s.175-192)", cog: "-", vat: "-"
-            },
-            {
-                gun: "11 Ekim Pazar", w: 2, rutin: "DİNLENME",
-                tr: "Fiziksel & Mental Dinlenme", mat: "-", tar: "-", cog: "-", vat: "-"
-            },
+            // --- 2. HAFTA (5 EKİM - 11 EKİM) : ANA KONULARI ERİTME ---
+            { gun: "5 Ekim Pzt", w: 2, rutin: "⚡ TEMPO (25 Paragraf)", tr: "4. Ünite: Noktalama İşaretleri (s.71-75)", mat: "-", tar: "V. Ünite: Osmanlıda Kültür ve Medeniyet (s.63)||⚠️ Kuruluş/Yükselme ATLA!", cog: "-", vat: "-" },
+            { gun: "6 Ekim Salı", w: 2, rutin: "⚡ TEMPO (15 Problem)", tr: "-", mat: "Kesir (s.151) ve Yaş Problemleri (s.159)", tar: "-", cog: "Türkiye'de İklim ve Bitki Örtüsü (s.63-83)", vat: "-" },
+            { gun: "7 Ekim Çar", w: 2, rutin: "⚡ TEMPO (25 Paragraf)", tr: "Sözcük Türleri: İsim, Sıfat, Zamir (s.13-22)", mat: "-", tar: "VIII-IX. Ünite: Dağılma Devri Islahatları & Fikir Akımları (s.101-114)", cog: "-", vat: "-" },
+            { gun: "8 Ekim Per", w: 2, rutin: "⚡ TEMPO (15 Problem)", tr: "-", mat: "Yüzde - Kâr - Zarar Problemleri (s.183)", tar: "-", cog: "Türkiye'de Nüfus, Göç ve Yerleşme (s.85-96)", vat: "-" },
+            { gun: "9 Ekim Cuma", w: 2, rutin: "⚡ TEMPO (25 Paragraf)", tr: "Sözcük Türleri: Zarf, Edat, Bağlaç ve Fiilimsi (s.22-34)", mat: "-", tar: "X. Ünite: Millî Mücadele Hazırlık (s.133) & Cepheler (s.145)", cog: "-", vat: "-" },
+            { gun: "10 Ekim Cmt", w: 2, rutin: "⚡ TEMPO (15 Problem)", tr: "-", mat: "Grafik Problemleri (s.199) & Sayısal Mantık (s.239)", tar: "-", cog: "Türkiye'de Tarım ve Hayvancılık (s.105-117)", vat: "-" },
+            { gun: "11 Ekim Pazar", w: 2, rutin: "DİNLENME", tr: "Fiziksel & Mental Dinlenme", mat: "-", tar: "-", cog: "-", vat: "-" },
 
-            // 3. HAFTA: VATANDAŞLIK HAP KAMPI VE SON KALAN KONULAR (ÖNCELİK 3)
-            {
-                gun: "12 Ekim Pzt", w: 3, rutin: "🛡️ ÖNCELİK 3: Vatandaşlık & Branş Kampı",
-                tr: "Türkçe Branş Denemesi Çözümü", mat: "Matematik Branş Denemesi Çözümü",
-                tar: "-", cog: "-", vat: "1982 Anayasası ve Temel Haklar"
-            },
-            {
-                gun: "13 Ekim Salı", w: 3, rutin: "🛡️ ÖNCELİK 3: Dağılma Islahatları & Yasama",
-                tr: "-", mat: "-",
-                tar: "VIII-IX. Ünite: Dağılma Devri Islahatları & Fikir Akımları (s.101-114)", cog: "Coğrafya Branş Denemesi Çözümü", vat: "Yasama (TBMM Görevleri ve Sayısal Veriler)"
-            },
-            {
-                gun: "14 Ekim Çar", w: 3, rutin: "🛡️ ÖNCELİK 3: Yürütme-Yargı & Ekstra Net",
-                tr: "-", mat: "Hareket Problemleri (s.167) & Kümeler (s.207)||💡 Vaktin kalırsa ekstra +2 net için bak",
-                tar: "-", cog: "-", vat: "Yürütme (Cumhurbaşkanı) ve Yargı (Yüksek Mahkemeler)"
-            },
-            {
-                gun: "15 Ekim Per", w: 3, rutin: "🛡️ ÖNCELİK 3: İdare & Çağdaş Video Kampı",
-                tr: "-", mat: "-",
-                tar: "Çağdaş Türk ve Dünya Tarihi (2 Saatlik Özet Video Kampı)||⚠️ s.197-247 Kitaptan Okumayı ATLA!", cog: "-", vat: "İdare Hukuku Şeması ve Güncel Bilgiler"
-            },
-            {
-                gun: "16 Ekim Cuma", w: 3, rutin: "🛡️ ÖNCELİK 3: Genel Deneme & Harita",
-                tr: "Tam Kapsamlı Genel Deneme + Analiz", mat: "Problem Soru Çözüm Tekrarı",
-                tar: "-", cog: "Dilsiz Haritalar Üzerinden Dağ/Ova/Maden Tekrarı", vat: "-"
-            },
-            {
-                gun: "17 Ekim Cmt", w: 3, rutin: "🛡️ ÖNCELİK 3: Genel Deneme & İnkılap",
-                tr: "Tam Kapsamlı Genel Deneme + Analiz", mat: "-",
-                tar: "Türk-İslam, Kültür Medeniyet ve İnkılap Hızlı Tekrar", cog: "-", vat: "Anayasa Süreler ve Yaş Sınırları Tekrarı"
-            },
-            {
-                gun: "18 Ekim Pazar", w: 3, rutin: "DİNLENME",
-                tr: "Fiziksel & Mental Dinlenme", mat: "-", tar: "-", cog: "-", vat: "-"
-            },
+            // --- 3. HAFTA (12 EKİM - 18 EKİM) : SON İTİŞ VE VATANDAŞLIK ---
+            { gun: "12 Ekim Pzt", w: 3, rutin: "🔥 SON İTİŞ (25 Paragraf)", tr: "Cümlenin Ögeleri (s.37)", mat: "-", tar: "XI-XII. Ünite: İnkılaplar & Atatürk Dönemi Dış Politika (s.162-192)", cog: "-", vat: "-" },
+            { gun: "13 Ekim Salı", w: 3, rutin: "🔥 SON İTİŞ (15 Problem)", tr: "-", mat: "Geometri: Üçgenler (s.247)", tar: "-", cog: "Türkiye'de Madencilik, Sanayi, Ticaret, Ulaşım ve Turizm (s.123-154)", vat: "-" },
+            { gun: "14 Ekim Çar", w: 3, rutin: "🔥 SON İTİŞ (Sözel Mantık)", tr: "Sözel Mantık Tablo Kurma Taktikleri", mat: "-", tar: "Çağdaş Türk ve Dünya Tarihi (2 Saatlik Özet Video Kampı)", cog: "-", vat: "-" },
+            { gun: "15 Ekim Per", w: 3, rutin: "🛡️ VATANDAŞLIK KAMPI", tr: "Türkçe Branş Denemesi Çözümü", mat: "-", tar: "-", cog: "-", vat: "1982 Anayasası ve Temel Haklar" },
+            { gun: "16 Ekim Cuma", w: 3, rutin: "🛡️ VATANDAŞLIK KAMPI", tr: "-", mat: "Matematik Branş Denemesi Çözümü", tar: "-", cog: "-", vat: "Yasama (TBMM Görevleri ve Sayısal Veriler)" },
+            { gun: "17 Ekim Cmt", w: 3, rutin: "🛡️ VATANDAŞLIK KAMPI", tr: "-", mat: "-", tar: "Tarih ve Coğrafya Hızlı Tekrar", cog: "-", vat: "Yürütme (Cumhurbaşkanı) ve Yargı (Yüksek Mahkemeler)" },
+            { gun: "18 Ekim Pazar", w: 3, rutin: "DİNLENME", tr: "Fiziksel & Mental Dinlenme", mat: "-", tar: "-", cog: "-", vat: "-" },
 
-            // 4. HAFTA: SON DÜZLÜK SİMÜLASYONU (19 EKİM - 24 EKİM)
-            {
-                gun: "19 Ekim Pzt", w: 4, rutin: "10:15 - 12:25 Sınav Simülasyonu",
-                tr: "Tam Kapsamlı TG Denemesi", mat: "Deneme Eksik Analizi (14:00-16:00)", tar: "Güncel Bilgiler (TÜİK/UNESCO) & Hap Not Tekrarı", cog: "-", vat: "-"
-            },
-            {
-                gun: "20 Ekim Salı", w: 4, rutin: "10:15 - 12:25 Sınav Simülasyonu",
-                tr: "Tam Kapsamlı TG Denemesi", mat: "Deneme Eksik Analizi (14:00-16:00)", tar: "Türk-İslam, Kültür Medeniyet & İnkılap Hap Tekrarı", cog: "-", vat: "-"
-            },
-            {
-                gun: "21 Ekim Çar", w: 4, rutin: "10:15 - 12:25 Sınav Simülasyonu",
-                tr: "Tam Kapsamlı TG Denemesi", mat: "Deneme Eksik Analizi (14:00-16:00)", tar: "Coğrafya Tarım-Maden-Sanayi Harita Tekrarı", cog: "-", vat: "-"
-            },
-            {
-                gun: "22 Ekim Per", w: 4, rutin: "10:15 - 12:25 Sınav Simülasyonu",
-                tr: "Tam Kapsamlı TG Denemesi", mat: "Deneme Eksik Analizi (14:00-16:00)", tar: "Yazım Kuralları, Noktalama ve Cebir Formül Tekrarı", cog: "-", vat: "-"
-            },
-            {
-                gun: "23 Ekim Cuma", w: 4, rutin: "10:15 - 12:25 Sınav Simülasyonu",
-                tr: "Tam Kapsamlı TG Denemesi", mat: "Deneme Eksik Analizi (14:00-16:00)", tar: "Vatandaşlık ve Güncel Bilgiler Son Okuma", cog: "-", vat: "-"
-            },
-            {
-                gun: "24 Ekim Cmt", w: 4, rutin: "SON HAZIRLIK",
-                tr: "14:00'te Çalışmayı Sonlandır", mat: "Sınav Evraklarını Hazırla", tar: "Zihni Dinlendir & Erken Uyu", cog: "-", vat: "-"
-            }
+            // --- 4. HAFTA (19 EKİM - 24 EKİM) : DENEME SİMÜLASYONU ---
+            { gun: "19 Ekim Pzt", w: 4, rutin: "10:15 - 12:25 Sınav Simülasyonu", tr: "Tam Kapsamlı TG Denemesi", mat: "Deneme Eksik Analizi (14:00-16:00)", tar: "Güncel Bilgiler (TÜİK/UNESCO) & Hap Not Tekrarı", cog: "-", vat: "İdare Hukuku Şeması" },
+            { gun: "20 Ekim Salı", w: 4, rutin: "10:15 - 12:25 Sınav Simülasyonu", tr: "Tam Kapsamlı TG Denemesi", mat: "Deneme Eksik Analizi (14:00-16:00)", tar: "Osmanlı Kültür Medeniyet & İnkılap Hap Tekrarı", cog: "-", vat: "-" },
+            { gun: "21 Ekim Çar", w: 4, rutin: "10:15 - 12:25 Sınav Simülasyonu", tr: "Tam Kapsamlı TG Denemesi", mat: "Deneme Eksik Analizi (14:00-16:00)", tar: "Coğrafya Tarım-Maden-Sanayi Harita Tekrarı", cog: "-", vat: "-" },
+            { gun: "22 Ekim Per", w: 4, rutin: "10:15 - 12:25 Sınav Simülasyonu", tr: "Tam Kapsamlı TG Denemesi", mat: "Deneme Eksik Analizi (14:00-16:00)", tar: "Yazım Kuralları, Noktalama ve Cebir Formül Tekrarı", cog: "-", vat: "-" },
+            { gun: "23 Ekim Cuma", w: 4, rutin: "10:15 - 12:25 Sınav Simülasyonu", tr: "Tam Kapsamlı TG Denemesi", mat: "Deneme Eksik Analizi (14:00-16:00)", tar: "Vatandaşlık ve Güncel Bilgiler Son Okuma", cog: "-", vat: "-" },
+            { gun: "24 Ekim Cmt", w: 4, rutin: "SON HAZIRLIK", tr: "14:00'te Çalışmayı Sonlandır", mat: "Sınav Evraklarını Hazırla", tar: "Zihni Dinlendir & Erken Uyu", cog: "-", vat: "-" }
         ];
 
-        localStorage.setItem("kpssProgram_orta_v13", JSON.stringify(kpssProgrami));
-        localStorage.removeItem("kpssKonuDurumlari_orta_v13"); 
+        localStorage.setItem("kpssProgram_orta_v14", JSON.stringify(kpssProgrami));
+        localStorage.removeItem("kpssKonuDurumlari_orta_v14"); 
         
         haftayiGoster(); updateDashboard(); pushToCloud();
     }
@@ -797,10 +694,10 @@
         let currentSelection = weekSelect.value;
         weekSelect.innerHTML = "";
         const weekTitles = [
-            "1. Hafta (28 Eyl - 4 Eki): ÖNCELİK 1 - Banko Netler",
-            "2. Hafta (5 Eki - 11 Eki): ÖNCELİK 2 - Yüksek Getirili Konular",
-            "3. Hafta (12 Eki - 18 Eki): ÖNCELİK 3 - Vatandaşlık & Branş Kampı",
-            "4. Hafta (19 Eki - 24 Eki): SON VURUŞ - Deneme Simülasyonu"
+            "1. Hafta (2 Eki - 4 Eki): BAŞLANGIÇ",
+            "2. Hafta (5 Eki - 11 Eki): ANA KONULARI ERİTME",
+            "3. Hafta (12 Eki - 18 Eki): SON İTİŞ & VATANDAŞLIK",
+            "4. Hafta (19 Eki - 24 Eki): SİMÜLASYON"
         ];
         let maxWeek = kpssProgrami[kpssProgrami.length-1].w;
         for(let i=1; i<=maxWeek; i++) {
@@ -812,7 +709,7 @@
 
         let seciliHafta = parseInt(weekSelect.value);
         const tbody = document.getElementById("konuTableBody"); tbody.innerHTML = "";
-        let kayitliDurumlar = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v13")) || {};
+        let kayitliDurumlar = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v14")) || {};
         let haftaVerisi = kpssProgrami.filter(item => item.w === seciliHafta);
 
         haftaVerisi.forEach((row) => {
@@ -865,7 +762,7 @@
 
     function durumDegistir(btnId, dersAdi = null, konuAdi = null) {
         let btn = document.getElementById(btnId);
-        let kayitliDurumlar = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v13")) || {};
+        let kayitliDurumlar = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v14")) || {};
         let mevcutDurum = btn.getAttribute("data-durum") || "Bekliyor";
 
         if (mevcutDurum === "Bekliyor") { 
@@ -880,10 +777,10 @@
 
         let yeniDurum = btn.getAttribute("data-durum");
         kayitliDurumlar[btnId] = yeniDurum;
-        localStorage.setItem("kpssKonuDurumlari_orta_v13", JSON.stringify(kayitliDurumlar)); 
+        localStorage.setItem("kpssKonuDurumlari_orta_v14", JSON.stringify(kayitliDurumlar)); 
         
         if (dersAdi && konuAdi && tumDersler[dersAdi] && tumDersler[dersAdi].includes(konuAdi)) {
-            let mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v13")) || {};
+            let mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v14")) || {};
             let mufId = dersAdi + "_" + konuAdi;
             
             if(yeniDurum === "Tamamlandı") {
@@ -891,7 +788,7 @@
             } else {
                 delete mufredatData[mufId];
             }
-            localStorage.setItem("kpssMufredat_orta_v13", JSON.stringify(mufredatData));
+            localStorage.setItem("kpssMufredat_orta_v14", JSON.stringify(mufredatData));
             renderMufredat(); 
         }
         updateDashboard(); pushToCloud();
@@ -937,19 +834,19 @@
         const dogru = parseInt(document.getElementById("inpDogru").value) || 0; const yanlis = parseInt(document.getElementById("inpYanlis").value) || 0;
         if (!tarih || toplam <= 0) return; if (toplam < (dogru + yanlis)) { alert("Hata: Doğru ve yanlışın toplamı soru sayısını geçemez!"); return; }
         let bos = toplam - (dogru + yanlis); let net = dogru - (yanlis * 0.25);
-        let soruListesi = JSON.parse(localStorage.getItem("kpssSoruVerileri_orta_v13")) || [];
+        let soruListesi = JSON.parse(localStorage.getItem("kpssSoruVerileri_orta_v14")) || [];
         soruListesi.push({ id: Date.now(), tarih, ders, konu, toplam, dogru, yanlis, bos, net });
         soruListesi.sort((a, b) => new Date(b.tarih) - new Date(a.tarih));
-        localStorage.setItem("kpssSoruVerileri_orta_v13", JSON.stringify(soruListesi));
+        localStorage.setItem("kpssSoruVerileri_orta_v14", JSON.stringify(soruListesi));
         document.getElementById("inpKonu").value = ''; document.getElementById("inpToplam").value = '';
         document.getElementById("inpDogru").value = ''; document.getElementById("inpYanlis").value = ''; 
         updateDashboard(); pushToCloud();
     }
 
     function soruSil(id) {
-        let soruListesi = JSON.parse(localStorage.getItem("kpssSoruVerileri_orta_v13")) || [];
+        let soruListesi = JSON.parse(localStorage.getItem("kpssSoruVerileri_orta_v14")) || [];
         soruListesi = soruListesi.filter(k => k.id !== id);
-        localStorage.setItem("kpssSoruVerileri_orta_v13", JSON.stringify(soruListesi)); updateDashboard(); pushToCloud();
+        localStorage.setItem("kpssSoruVerileri_orta_v14", JSON.stringify(soruListesi)); updateDashboard(); pushToCloud();
     }
 
     function calcNet(d, y) { return (d || 0) - ((y || 0) * 0.25); }
@@ -963,22 +860,22 @@
         let cogD = parseFloat(document.getElementById("dCogD").value) || 0; let cogY = parseFloat(document.getElementById("dCogY").value) || 0;
         let vatD = parseFloat(document.getElementById("dVatD").value) || 0; let vatY = parseFloat(document.getElementById("dVatY").value) || 0;
         let gyNet = calcNet(trD, trY) + calcNet(matD, matY); let gkNet = calcNet(tarD, tarY) + calcNet(cogD, cogY) + calcNet(vatD, vatY); let topNet = gyNet + gkNet;
-        let list = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v13")) || [];
+        let list = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v14")) || [];
         list.push({ id: Date.now(), tarih, adi, tr: calcNet(trD,trY), mat: calcNet(matD,matY), tar: calcNet(tarD,tarY), cog: calcNet(cogD,cogY), vat: calcNet(vatD,vatY), gyNet, gkNet, topNet });
         list.sort((a, b) => new Date(b.tarih) - new Date(a.tarih));
-        localStorage.setItem("kpssDenemeVerileri_orta_v13", JSON.stringify(list));
+        localStorage.setItem("kpssDenemeVerileri_orta_v14", JSON.stringify(list));
         ['dTrD','dTrY','dMatD','dMatY','dTarD','dTarY','dCogD','dCogY','dVatD','dVatY','denemeAdi'].forEach(id => document.getElementById(id).value = '');
         renderDeneme(); updateDashboard(); pushToCloud();
     }
 
     function silDeneme(id) {
-        let list = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v13")) || [];
-        list = list.filter(k => k.id !== id); localStorage.setItem("kpssDenemeVerileri_orta_v13", JSON.stringify(list));
+        let list = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v14")) || [];
+        list = list.filter(k => k.id !== id); localStorage.setItem("kpssDenemeVerileri_orta_v14", JSON.stringify(list));
         renderDeneme(); updateDashboard(); pushToCloud();
     }
 
     function renderDeneme() {
-        let list = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v13")) || []; let html = '';
+        let list = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v14")) || []; let html = '';
         list.forEach(d => {
             html += `<tr><td>${d.tarih.split("-").reverse().join(".")}</td><td><strong>${d.adi}</strong></td><td style="text-align: right;">${d.tr.toFixed(2)}</td><td style="text-align: right;">${d.mat.toFixed(2)}</td><td style="text-align: right;">${d.tar.toFixed(2)}</td><td style="text-align: right;">${d.cog.toFixed(2)}</td><td style="text-align: right;">${d.vat.toFixed(2)}</td><td style="text-align: right; color:var(--text-muted); font-weight:600;">${d.gyNet.toFixed(2)}</td><td style="text-align: right; color:var(--text-muted); font-weight:600;">${d.gkNet.toFixed(2)}</td><td style="text-align: right; color:var(--success); font-weight:700; font-size:1.1rem;">${d.topNet.toFixed(2)}</td><td style="text-align: center;"><button class="btn-danger" onclick="silDeneme(${d.id})">Sil</button></td></tr>`;
         });
@@ -988,7 +885,7 @@
     function closeKronos() { document.getElementById('kronosModal').classList.remove('active'); }
 
     function generateKronosReport() {
-        let kayitliDurumlar = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v13")) || {};
+        let kayitliDurumlar = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v14")) || {};
         let eksikGorevler = [];
         
         if(kpssProgrami && kpssProgrami.length > 0) {
@@ -1011,8 +908,8 @@
         }
 
         let reportHtml = `<div class="kronos-report-item" style="border-left: 4px solid var(--accent);">
-            <h4 style="color: var(--accent);">🎯 70+ Puan (52+ Net) Strateji Özeti</h4>
-            <p style="font-size: 0.85rem; color: var(--text-main); margin-top: 0.2rem;">Kitaplarındaki düşük getirili 11 ünite elendi. Sadece kalan yüksek getirili konulara odaklanarak 25 Ekim'de 55-60 net bandına rahatlıkla ulaşacaksın.</p>
+            <h4 style="color: var(--accent);">🎯 70+ Puan (52+ Net) Acil Durum Özeti</h4>
+            <p style="font-size: 0.85rem; color: var(--text-main); margin-top: 0.2rem;">Sınava 23 gün kaldı ama endişelenme! Hedeflediğin netin %50'lik kısmını oluşturan konuları zaten bitirdin. Zaman tuzaklarını elendik, sadece net getiren konulara odaklanıyoruz.</p>
         </div>`;
         
         if(eksikGorevler.length > 0) {
@@ -1026,7 +923,7 @@
         } else {
             reportHtml += `<div class="kronos-report-item" style="border-left: 4px solid var(--success);">
                 <h4 style="color: var(--success);">✅ MÜKEMMEL DİSİPLİN</h4>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">Öncelik sırasına göre ilerleyen planda hiç fire vermedin!</p>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">Kısa sürede büyük iş başarıyorsun, programa tam sadıksın!</p>
             </div>`;
         }
 
@@ -1035,7 +932,7 @@
     }
 
     function updateDashboard() {
-        let mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v13")) || oncedenBitenler;
+        let mufredatData = JSON.parse(localStorage.getItem("kpssMufredat_orta_v14")) || oncedenBitenler;
         let totalKonu = 0; let tamamlananKonu = 0;
         for (const [dersAd, konular] of Object.entries(tumDersler)) {
             konular.forEach(k => {
@@ -1051,7 +948,7 @@
         document.getElementById("konuProgressBar").style.width = `${yuzde}%`; 
         document.getElementById("konuProgressYuzde").innerText = `%${yuzde}`;
 
-        let kayitliDurumlar = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v13")) || {};
+        let kayitliDurumlar = JSON.parse(localStorage.getItem("kpssKonuDurumlari_orta_v14")) || {};
         let eksikGorevler = [];
         
         if(kpssProgrami && kpssProgrami.length > 0) {
@@ -1086,7 +983,7 @@
         }
         document.getElementById("aiCalendarTasks").innerHTML = eksikHtml;
 
-        let soruListesi = JSON.parse(localStorage.getItem("kpssSoruVerileri_orta_v13")) || [];
+        let soruListesi = JSON.parse(localStorage.getItem("kpssSoruVerileri_orta_v14")) || [];
         let stats = { 'Türkçe': { tot: 0, d: 0, y: 0, b:0, net: 0 }, 'Matematik': { tot: 0, d: 0, y: 0, b:0, net: 0 }, 'Tarih': { tot: 0, d: 0, y: 0, b:0, net: 0 }, 'Coğrafya': { tot: 0, d: 0, y: 0, b:0, net: 0 }, 'Vatandaşlık': { tot: 0, d: 0, y: 0, b:0, net: 0 }, 'GENEL': { tot: 0, d: 0, y: 0, b:0, net: 0 } };
         let soruListesiHtml = '';
 
@@ -1118,7 +1015,7 @@
             document.getElementById("aiStrongTasks").innerHTML = `<li class="task-item"><span style="color:var(--text-muted);">Soru verisi girilmedi</span></li>`;
         }
 
-        let denemeList = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v13")) || [];
+        let denemeList = JSON.parse(localStorage.getItem("kpssDenemeVerileri_orta_v14")) || [];
         let dOrtGY = 0, dOrtGK = 0, dOrtTotal = 0;
         if(denemeList.length > 0) {
             dOrtGY = denemeList.reduce((sum, d) => sum + d.gyNet, 0) / denemeList.length; dOrtGK = denemeList.reduce((sum, d) => sum + d.gkNet, 0) / denemeList.length; dOrtTotal = denemeList.reduce((sum, d) => sum + d.topNet, 0) / denemeList.length;
@@ -1160,8 +1057,8 @@
         printContainer.style.fontFamily = 'Arial, sans-serif';
 
         let html = `
-            <h2 style="text-align:center; color:#111; margin-bottom: 10px; text-transform: uppercase;">KPSS 2026 Ortaöğretim - Nokta Atışı Öncelik & Eleme Planı (28 Eyl - 24 Eki)</h2>
-            <p style="text-align:center; font-size:11px; color:#555; margin-bottom:15px;">Hedef: 70+ Puan (52+ Net) | Düşük getirili zaman tuzakları elenmiş, en çok soru çıkan konular ilk haftalara çekilmiştir.</p>
+            <h2 style="text-align:center; color:#111; margin-bottom: 10px; text-transform: uppercase;">KPSS 2026 Ortaöğretim - Nokta Atışı 23 Günlük Acil Plan (2 Eki - 24 Eki)</h2>
+            <p style="text-align:center; font-size:11px; color:#555; margin-bottom:15px;">Hedef: 70+ Puan (52+ Net) | Düşük getirili zaman tuzakları elenmiş, en çok soru çıkan konular önceliğe alınmıştır.</p>
             <table style="width: 100%; border-collapse: collapse; font-size: 10.5px;">
                 <thead>
                     <tr style="background-color: #e5e7eb; border: 1px solid #d1d5db; color: #111;">
@@ -1214,7 +1111,7 @@
 
         const opt = {
             margin:       8, 
-            filename:     'KPSS_2026_Oncelik_Ve_Eleme_Programi.pdf',
+            filename:     'KPSS_2026_23_Gunluk_Acil_Program.pdf',
             image:        { type: 'jpeg', quality: 1 },
             html2canvas:  { scale: 2 },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' },
@@ -1222,7 +1119,7 @@
         };
 
         html2pdf().set(opt).from(printContainer).save().then(() => {
-            btn.innerHTML = "📄 Nokta Atışı Planı PDF İndir";
+            btn.innerHTML = "📄 23 Günlük Planı PDF İndir";
         });
     }
 </script>
